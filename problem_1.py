@@ -165,9 +165,7 @@ def beam_mesh(n, L):
 
 # Strucutre connectivity matrix and coordinates of the nodes
 # Defining the type of Element : 6 or 5 DoFs (5 - to complete in Assignment)
-Coord, Connect, Elem_Types = beam_mesh(20,10)
-
-
+Coord, Connect, Elem_Types = beam_mesh(21,10)
 
 
 PlotUndeformed(Coord, np.array([[0,0]])) # Display of nodes
@@ -176,8 +174,7 @@ PlotUndeformed(Coord, np.array([[0,0]])) # Display of nodes
 No_Ddl = len(Coord[1])*3  # 3 DoF per node
 Num_Ddl = np.arange(No_Ddl) # Indexing starts at 0 in Python
 print('The structure has ' + str(No_Ddl) + ' degrees of freedom')
-
-                  
+          
 PlotUndeformed(Coord, Connect)
 
 # Total number of elements
@@ -186,9 +183,9 @@ print("The structure is composed of " + str(No_Elem) + " elements.")
 
 # USER
 # Fixed degrees of freedom
-
-# Bridge:
-Fixed_DoF = np.array([0,1,18,19])
+# Structure:
+#Fixed_DoF = np.array([0,1,7])
+Fixed_DoF = np.array([0,1,No_Ddl-2])
 
 # Free degrees of freedom
 Free_DoF = np.delete(Num_Ddl, Fixed_DoF)
@@ -204,9 +201,12 @@ P = np.zeros(No_Ddl)
 # USER
 # in [N] and [m]
 
-# Bridge:
+# Structure:
 ## Ici on prend en compte que les ddls libres, pas ceux bloqué par les réactions d'appui
-P_f = np.array([0, 0, -100e3, 0, 0, -100e3, 0, 0, -100e3, 0, 0, -100e3, 0, 0, -100e3, 0, 0])
+P_f = np.zeros(len(Free_DoF))
+P_f[(No_Ddl//2)-2] = -40e3 # [N]
+P_f[len(Free_DoF)-2] = -2000e3 # [N]
+
 
 # Building other vectors:
 P[Free_DoF] = P_f
@@ -214,11 +214,11 @@ P[Free_DoF] = P_f
 # USER
 
 # Bridge:
-AE_Elem = np.array([A*E, A*E, A*E, A*E, A*E, A*E, A*E, A*E, A*E, A*E, A*E])
-EI_Elem = np.array([E*I, E*I, E*I, E*I, E*I, E*I, E*I, E*I, E*I, E*I, E*I])
+AE_Elem = np.ones(No_Elem)*EA
+EI_Elem = np.ones(No_Elem)*EI
 
 # Variable used to magnify the plot of deformed shape, if needed
-Scale = 500
+Scale = 1000
 
 """### 2: COMPUTATIONS
 
@@ -395,7 +395,6 @@ PlotBending(np.array([[0, L_Elem[Elem_ID_to_display]],[0,0]]), np.array([[0,1]])
 print(Bending)
 """
 
-""" TP1 """
 
 # Print the deformed shape of the structure
 Disp = np.zeros((2,len(Coord[0])))
@@ -404,19 +403,3 @@ Disp[0] = U[np.arange(len(Coord[0]))*3]
 Disp[1] = U[np.arange(len(Coord[0]))*3+1]
 PlotDeformed(Coord, Connect, Disp, Scale)
 
-
-## Vertical displacement at node 3 (at mid-span)
-print("A.1) Vertical displacement at node 3 (at mid-span) = {} mm".format(U[10]*1000))
-## Find the element with the maximum axial force
-ID_N_max = np.argmax(np.abs(p_loc[:,3])) #argmax donne l'index et max la valeur
-print("A.2) Element with the maximum axial force: Element {}".format(ID_N_max))
-print("Axial force in element {} = {} kN".format(ID_N_max, np.around(p_loc[ID_N_max][3]/1000,2)))
-
-## Find the element with the maximum bending moment
-ID_M_max = np.argmax(np.abs(p_loc[:,2]))
-print("A.3) Element with the maximum bending moment: Element {}".format(ID_M_max))
-print("Bending moment in element {} = {} kNm".format(ID_M_max, np.around(p_loc[ID_M_max][2]/1000,2)))
-# Compute the maximum stress (tensile or compressive) at the most loaded cross-section in the element, identifying the relative importance of the contributions coming from the axial force and the bending moment.
-# The maximum stress is given by the formula: sigma = N/A + M*y/I
-sigma_max = np.abs(p_loc[ID_M_max][3]/A) + np.abs((p_loc[ID_M_max][2]*((458/2)*10**-3))/I)
-print("A.4) Maximum stress in element {} = {} MPa".format(ID_M_max, sigma_max/10**6))
