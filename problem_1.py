@@ -454,9 +454,24 @@ plt.show()
 assuming a linear approximation both for the rotations 𝜃(𝑥) and the transverse displacements 𝑢𝑦0(𝑥). Plot the transverse
 displacements and rotations for a mesh of 2, 8, 20, and 200 FEs, together with the exact solution. Compare the response
 obtained with the four meshes, and with respect to the exact solution. Discuss whether the FE responses satisfy the
-compatibility conditions, namely: i"""
+compatibility conditions, namely: is the displacement field continuous within each element and between elements?, does it
+satisfy the support conditions?"""
 
+"""(c) (7.5 points) Consider the response obtained in (b) with 8 FEs. Show the evolution of the bending moment and shear
+force along the beam. Discuss if the FE response satisfies the equilibrium conditions, namely: locally (within each element),
+between elements, and the natural boundary conditions."""
 
+"""(d) (7.5 points) Consider the following alternative beam lengths: L = 2 m, 20 m, and 200 m. For each length, and considering
+always a mesh of 200 FEs, plot in the same graph the transverse displacement along the beam for: Timoshenko FEs, Euler-
+Bernoulli FEs, and the exact solution. Comment on the results, discussing which numerical results you would “trust” as an
+engineer if you did not have access to the exact solution."""
 
-    
+"""(e) (7.5 points) Compute analytically and show the Timoshenko stiffness matrix considering selective reduced integration,
+as discussed in the lecture. Implement it in the Python script and plot again the transverse displacement for the same cases
+and mesh of question (d). Comment on the results obtained."""
 
+"""(f) (22.5 points) Adapt the Python script to compute the geometrically nonlinear response of the beam using a corotational
+formulation. Consider Euler-Bernoulli FEs. Show the transverse displacements for a mesh of 2 elements as well as for a
+mesh of 20 elements. Compare the results with those of the geometrically linear case, in (a), and explain physically the
+differences in the results. PS. You can implement a classical Newton-Raphson method and/or a displacement-control
+method, as discussed in the lecture and exercise session, and shown in the shared Python code."""
