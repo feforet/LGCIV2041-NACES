@@ -147,17 +147,18 @@ GAc = GA*k # [N]
 # Coordinates of the nodes: x in the first line and y in the second line, in [m].
 
 
-"""
-Mesh the beam with n nodes and length L
-Input:
-    n: int number of nodes
-    L: float length of the beam
-Output:
-    Coord: np.array of shape (2,n) containing the coordinates of the nodes
-    Connect: np.array of shape (n-1,2) containing the connectivity of the nodes
-    Elem_Types : np.array of shape (n-1) containing the type of element (6 DoFs)
-"""
+
 def beam_mesh(n, L):
+    """
+    Mesh the beam with n nodes and length L
+    Input:
+        n: int number of nodes
+        L: float length of the beam
+    Output:
+        Coord: np.array of shape (2,n) containing the coordinates of the nodes
+        Connect: np.array of shape (n-1,2) containing the connectivity of the nodes
+        Elem_Types : np.array of shape (n-1) containing the type of element (6 DoFs)
+    """
     Coord = np.zeros((2,n))
     for i in range(n):
         Coord[0][i] = i*L/(n-1)
@@ -432,7 +433,7 @@ Compare the three results and comment."""
 U2, P2, P_r2, p_loc2, L_Elem2, Scale2, Coord2, Connect2 = calcul(3,10,False)
 U20, P20, P_r20, p_loc20, L_Elem20, Scale20, Coord20, Connect20 = calcul(21,10,False)
 # Plot u(x) pour les deux maillages
-plt.plot(Coord[0], U20[1::3], label = '20 elements')
+plt.plot(Coord20[0], U20[1::3], label = '20 elements')
 plt.plot(Coord2[0], U2[1::3], label = '2 elements')
 plt.title('Transverse displacement field')
 plt.xlabel('x [m]')
@@ -441,7 +442,7 @@ plt.legend()
 plt.show()
 
 # Plot theta(x) pour les deux maillages
-plt.plot(Coord[0], U20[2::3], label = '20 elements')
+plt.plot(Coord20[0], U20[2::3], label = '20 elements')
 plt.plot(Coord2[0], U2[2::3], label = '2 elements')
 plt.title('Rotational field')
 plt.xlabel('x [m]')
