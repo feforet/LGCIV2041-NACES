@@ -139,6 +139,9 @@ EA = 4e10 # [N]
 EI = 4e9 # [Nm^2]
 v = 0.2 # [/]
 k = 5/6 # [/]
+GA = EA/(2*(1+v)) # [N]
+GAc = GA*k # [N]
+timoshenko = True
 
 # USER
 # Coordinates of the nodes: x in the first line and y in the second line, in [m].
@@ -168,14 +171,14 @@ def beam_mesh(n, L):
 Coord, Connect, Elem_Types = beam_mesh(21,10)
 
 
-PlotUndeformed(Coord, np.array([[0,0]])) # Display of nodes
+#PlotUndeformed(Coord, np.array([[0,0]])) # Display of nodes
 
 # Total number of degrees of freedom + numbering
 No_Ddl = len(Coord[1])*3  # 3 DoF per node
 Num_Ddl = np.arange(No_Ddl) # Indexing starts at 0 in Python
 print('The structure has ' + str(No_Ddl) + ' degrees of freedom')
           
-PlotUndeformed(Coord, Connect)
+#PlotUndeformed(Coord, Connect)
 
 # Total number of elements
 No_Elem = len(Connect)
@@ -216,6 +219,7 @@ P[Free_DoF] = P_f
 # Bridge:
 AE_Elem = np.ones(No_Elem)*EA
 EI_Elem = np.ones(No_Elem)*EI
+GAc_Elem = np.ones(No_Elem)*GAc
 
 # Variable used to magnify the plot of deformed shape, if needed
 Scale = 1000
@@ -281,7 +285,7 @@ NOTE: the matrix product is written '@' in Python
 for elem in range(No_Elem) : 
     
     # Stiffness matrices in the local reference system, 6 DoF
-    if Elem_Types[elem] == 6 : 
+    if Elem_Types[elem] == 6  and timoshenko == False: 
         k_elem_loc[elem] = np.array([[AE_Elem[elem]/L_Elem[elem], 0, 0, -AE_Elem[elem]/L_Elem[elem], 0, 0],
                                      [0, 12*EI_Elem[elem]/L_Elem[elem]**3,  6*EI_Elem[elem]/L_Elem[elem]**2, 0,  -12*EI_Elem[elem]/L_Elem[elem]**3,  6*EI_Elem[elem]/L_Elem[elem]**2],
                                      [0, 6*EI_Elem[elem]/L_Elem[elem]**2,   4*EI_Elem[elem]/L_Elem[elem],   0,   -6*EI_Elem[elem]/L_Elem[elem]**2,   2*EI_Elem[elem]/L_Elem[elem]],
@@ -291,7 +295,7 @@ for elem in range(No_Elem) :
     
     # TO COMPLETE
     # Stiffness matrices in the local reference system, 5 DoF
-    elif Elem_Types[elem] == 5 : 
+    elif Elem_Types[elem] == 5 and timoshenko == False: 
         # the idea is to use a local 6x6 matrix and add 0 and 1 to cancel the effect of the DoF not considered
         k_elem_loc[elem] = np.array([[AE_Elem[elem]/L_Elem[elem], 0, 0, -AE_Elem[elem]/L_Elem[elem], 0,0],
                                      [0, 3*EI_Elem[elem]/L_Elem[elem]**3,  3*EI_Elem[elem]/L_Elem[elem]**2, 0,  -3*EI_Elem[elem]/L_Elem[elem]**3,0],
@@ -299,7 +303,16 @@ for elem in range(No_Elem) :
                                         [-AE_Elem[elem]/L_Elem[elem], 0, 0, AE_Elem[elem]/L_Elem[elem], 0,0],
                                         [0, -3*EI_Elem[elem]/L_Elem[elem]**3, -3*EI_Elem[elem]/L_Elem[elem]**2, 0,  3*EI_Elem[elem]/L_Elem[elem]**3,0],[0,0,0,0,0,1]])  #MODIFIE
 
-            
+    elif timoshenko :
+        k_elem_loc[elem] = np.array([[AE_Elem[elem]/L_Elem[elem], 0, 0, -AE_Elem[elem]/L_Elem[elem], 0, 0],
+                                     [0,GAc_Elem[elem]/L_Elem[elem], GAc_Elem[elem]/2, 0, -GAc_Elem[elem]/L_Elem[elem],  GAc_Elem[elem]/2],
+                                     [0,GAc_Elem[elem]/2, EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/3, 0,   -GAc_Elem[elem]/2,  -EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/6],
+                                     [-AE_Elem[elem]/L_Elem[elem], 0, 0, AE_Elem[elem]/L_Elem[elem], 0, 0],
+                                     [0, -GAc_Elem[elem]/L_Elem[elem], -GAc_Elem[elem]/2, 0, GAc_Elem[elem]/L_Elem[elem], -GAc_Elem[elem]/2],
+                                     [0,GAc_Elem[elem]/2, -EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/6, 0, -GAc_Elem[elem]/2,  EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/3]])#MODIFIE
+    
+    
+           
     # Stiffness matrices in the global reference system
     k_elem_glob[elem] = np.transpose(r_C[elem]) @ k_elem_loc[elem] @ r_C[elem]
     
@@ -402,4 +415,5 @@ Disp = np.zeros((2,len(Coord[0])))
 Disp[0] = U[np.arange(len(Coord[0]))*3]
 Disp[1] = U[np.arange(len(Coord[0]))*3+1]
 PlotDeformed(Coord, Connect, Disp, Scale)
+print(U[31])
 
