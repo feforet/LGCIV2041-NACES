@@ -529,10 +529,42 @@ plt.show()
 force along the beam. Discuss if the FE response satisfies the equilibrium conditions, namely: locally (within each element),
 between elements, and the natural boundary conditions."""
 
-"""(d) (7.5 points) Consider the following alternative beam lengths: L = 2 m, 20 m, and 200 m. For each length, and considering
-always a mesh of 200 FEs, plot in the same graph the transverse displacement along the beam for: Timoshenko FEs, Euler-
-Bernoulli FEs, and the exact solution. Comment on the results, discussing which numerical results you would “trust” as an
-engineer if you did not have access to the exact solution."""
+# Extract shear and bending for 8 elements
+shear8 = np.zeros((8, 2))
+bending8 = np.zeros((8, 2))
+for i in range(8):
+    shear8[i][0] = p_loc8T[i][1]
+    shear8[i][1] = -p_loc8T[i][4]
+    bending8[i][0] = p_loc8T[i][2]
+    bending8[i][1] = -p_loc8T[i][5]
+
+
+# Plot shear force along the beam
+x_shear = np.linspace(0, 10, 9)
+shear_values = np.zeros(9)
+for i in range(8):
+    shear_values[i] = shear8[i][0]
+shear_values[-1] = shear8[-1][1]
+plt.plot(x_shear, shear_values, label='Shear force')
+plt.title('Shear force along the beam')
+plt.xlabel('x [m]')
+plt.ylabel('Shear force [N]')
+plt.legend()
+plt.show()
+
+# Plot bending moment along the beam
+x_bending = np.linspace(0, 10, 9)
+bending_values = np.zeros(9)
+for i in range(8):
+    bending_values[i] = bending8[i][0]
+bending_values[-1] = bending8[-1][1]
+plt.plot(x_bending, bending_values, label='Bending moment')
+plt.title('Bending moment along the beam')
+plt.xlabel('x [m]')
+plt.ylabel('Bending moment [Nm]')
+plt.legend()
+plt.show()
+
 
 """(e) (7.5 points) Compute analytically and show the Timoshenko stiffness matrix considering selective reduced integration,
 as discussed in the lecture. Implement it in the Python script and plot again the transverse displacement for the same cases
