@@ -37,6 +37,7 @@ def PlotUndeformed(coord, connect) :
         plt.annotate(str(i), (coord[0][i], coord[1][i]))
     
     plt.axis('equal')
+    plt.grid()
     plt.show()
 
 # DEFINITIONS
@@ -60,6 +61,7 @@ def PlotDeformed(coord, connect, displ, scale) :
         plt.annotate(str(i), (coord[0][i], coord[1][i]))
     
     plt.axis('equal')
+    plt.grid()
     plt.show()
 
 # DEFINITIONS
@@ -90,7 +92,12 @@ def PlotShear(coord, connect, Shear) :
             plt.plot([coord[0][connect[i][1]], coord[0][connect[i][1]]], 
                 [coord[1][connect[i][1]]+ Shear[i][1], coord[1][connect[i][1]]],  
                 'g' )
+    plt.title('Shear forces')
+    plt.xlabel('x [m]')
+    plt.ylabel('Shear force [N]')
+    plt.grid()
     plt.show()
+
 def PlotBending(coord, connect, Bending, Shear) : 
     
     for i in range(len(connect)) : 
@@ -125,6 +132,10 @@ def PlotBending(coord, connect, Bending, Shear) :
             plt.plot([coord[0][connect[i][1]], coord[0][connect[i][1]]], 
                 [coord[1][connect[i][1]]+ Bending[i][1], coord[1][connect[i][1]]],  
                 'r' )
+    plt.title('Bending moments')
+    plt.xlabel('x [m]')
+    plt.ylabel('Bending moment [Nm]')
+    plt.grid()
     plt.show()
 
 """### 1: INPUT
@@ -289,7 +300,7 @@ def calcul(n,L,timoshenko):
     for elem in range(No_Elem) : 
         
         # Stiffness matrices in the local reference system, 6 DoF
-        if Elem_Types[elem] == 6  and timoshenko == False: 
+        if Elem_Types[elem] == 6  and not timoshenko: 
             k_elem_loc[elem] = np.array([[AE_Elem[elem]/L_Elem[elem], 0, 0, -AE_Elem[elem]/L_Elem[elem], 0, 0],
                                         [0, 12*EI_Elem[elem]/L_Elem[elem]**3,  6*EI_Elem[elem]/L_Elem[elem]**2, 0,  -12*EI_Elem[elem]/L_Elem[elem]**3,  6*EI_Elem[elem]/L_Elem[elem]**2],
                                         [0, 6*EI_Elem[elem]/L_Elem[elem]**2,   4*EI_Elem[elem]/L_Elem[elem],   0,   -6*EI_Elem[elem]/L_Elem[elem]**2,   2*EI_Elem[elem]/L_Elem[elem]],
@@ -299,7 +310,7 @@ def calcul(n,L,timoshenko):
         
         # TO COMPLETE
         # Stiffness matrices in the local reference system, 5 DoF
-        elif Elem_Types[elem] == 5 and timoshenko == False: 
+        elif Elem_Types[elem] == 5 and not timoshenko: 
             # the idea is to use a local 6x6 matrix and add 0 and 1 to cancel the effect of the DoF not considered
             k_elem_loc[elem] = np.array([[AE_Elem[elem]/L_Elem[elem], 0, 0, -AE_Elem[elem]/L_Elem[elem], 0,0],
                                         [0, 3*EI_Elem[elem]/L_Elem[elem]**3,  3*EI_Elem[elem]/L_Elem[elem]**2, 0,  -3*EI_Elem[elem]/L_Elem[elem]**3,0],
@@ -457,6 +468,7 @@ plt.title('Transverse displacement field')
 plt.xlabel('x [m]')
 plt.ylabel('uy(x) [m]')
 plt.legend()
+plt.grid()
 plt.show()
 
 # Plot theta(x) pour les deux maillages et la solution exacte
@@ -467,6 +479,7 @@ plt.title('Rotational field')
 plt.xlabel('x [m]')
 plt.ylabel('theta(x) [rad]')
 plt.legend()
+plt.grid()
 plt.show()
 
 
@@ -508,6 +521,7 @@ plt.title('Transverse displacement field')
 plt.xlabel('x [m]')
 plt.ylabel('uy(x) [m]')
 plt.legend()
+plt.grid()
 plt.show()
 
 # Plot theta(x) pour les deux maillages et la solution exacte
@@ -520,6 +534,7 @@ plt.title('Rotational field')
 plt.xlabel('x [m]')
 plt.ylabel('theta(x) [rad]')
 plt.legend()
+plt.grid()
 plt.show()
 
 
@@ -528,6 +543,20 @@ plt.show()
 """(c) (7.5 points) Consider the response obtained in (b) with 8 FEs. Show the evolution of the bending moment and shear
 force along the beam. Discuss if the FE response satisfies the equilibrium conditions, namely: locally (within each element),
 between elements, and the natural boundary conditions."""
+
+def computeBendingShear(p_loc, L_Elem, Connect):
+    shear = np.zeros((len(Connect),2))
+    bending = np.zeros((len(Connect),2))
+    for i in range(len(Connect)):
+        shear[i][0] = p_loc[i][1]
+        shear[i][1] = -p_loc[i][4]
+        bending[i][0] = p_loc[i][2]
+        bending[i][1] = -p_loc[i][5]
+    return bending, shear
+
+bending8T, shear8T = computeBendingShear(p_loc8T, L_Elem8T, Connect8T)
+PlotShear(Coord8T, Connect8T, shear8T)
+PlotBending(Coord8T, Connect8T, bending8T, shear8T)
 
 """(d) (7.5 points) Consider the following alternative beam lengths: L = 2 m, 20 m, and 200 m. For each length, and considering
 always a mesh of 200 FEs, plot in the same graph the transverse displacement along the beam for: Timoshenko FEs, Euler-
