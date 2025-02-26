@@ -180,7 +180,7 @@ def beam_mesh(n, L):
 
 
     
-def calcul(n,L,timoshenko):
+def calcul(n,L,timoshenko, SelRedInt=False):
     # Strucutre connectivity matrix and coordinates of the nodes
     # Defining the type of Element : 6 or 5 DoFs (5 - to complete in Assignment)
     Coord, Connect, Elem_Types = beam_mesh(n,L)
@@ -300,7 +300,7 @@ def calcul(n,L,timoshenko):
     for elem in range(No_Elem) : 
         
         # Stiffness matrices in the local reference system, 6 DoF
-        if Elem_Types[elem] == 6  and not timoshenko: 
+        if not timoshenko and Elem_Types[elem] == 6: 
             k_elem_loc[elem] = np.array([[AE_Elem[elem]/L_Elem[elem], 0, 0, -AE_Elem[elem]/L_Elem[elem], 0, 0],
                                         [0, 12*EI_Elem[elem]/L_Elem[elem]**3,  6*EI_Elem[elem]/L_Elem[elem]**2, 0,  -12*EI_Elem[elem]/L_Elem[elem]**3,  6*EI_Elem[elem]/L_Elem[elem]**2],
                                         [0, 6*EI_Elem[elem]/L_Elem[elem]**2,   4*EI_Elem[elem]/L_Elem[elem],   0,   -6*EI_Elem[elem]/L_Elem[elem]**2,   2*EI_Elem[elem]/L_Elem[elem]],
@@ -310,7 +310,7 @@ def calcul(n,L,timoshenko):
         
         # TO COMPLETE
         # Stiffness matrices in the local reference system, 5 DoF
-        elif Elem_Types[elem] == 5 and not timoshenko: 
+        elif not timoshenko and Elem_Types[elem] == 5: 
             # the idea is to use a local 6x6 matrix and add 0 and 1 to cancel the effect of the DoF not considered
             k_elem_loc[elem] = np.array([[AE_Elem[elem]/L_Elem[elem], 0, 0, -AE_Elem[elem]/L_Elem[elem], 0,0],
                                         [0, 3*EI_Elem[elem]/L_Elem[elem]**3,  3*EI_Elem[elem]/L_Elem[elem]**2, 0,  -3*EI_Elem[elem]/L_Elem[elem]**3,0],
@@ -318,14 +318,15 @@ def calcul(n,L,timoshenko):
                                             [-AE_Elem[elem]/L_Elem[elem], 0, 0, AE_Elem[elem]/L_Elem[elem], 0,0],
                                             [0, -3*EI_Elem[elem]/L_Elem[elem]**3, -3*EI_Elem[elem]/L_Elem[elem]**2, 0,  3*EI_Elem[elem]/L_Elem[elem]**3,0],[0,0,0,0,0,1]])  #MODIFIE
 
-        elif timoshenko :
+        elif timoshenko and not SelRedInt:
             k_elem_loc[elem] = np.array([[AE_Elem[elem]/L_Elem[elem], 0, 0, -AE_Elem[elem]/L_Elem[elem], 0, 0],
                                         [0,GAc_Elem[elem]/L_Elem[elem], GAc_Elem[elem]/2, 0, -GAc_Elem[elem]/L_Elem[elem],  GAc_Elem[elem]/2],
                                         [0,GAc_Elem[elem]/2, EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/3, 0,   -GAc_Elem[elem]/2,  -EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/6],
                                         [-AE_Elem[elem]/L_Elem[elem], 0, 0, AE_Elem[elem]/L_Elem[elem], 0, 0],
                                         [0, -GAc_Elem[elem]/L_Elem[elem], -GAc_Elem[elem]/2, 0, GAc_Elem[elem]/L_Elem[elem], -GAc_Elem[elem]/2],
                                         [0,GAc_Elem[elem]/2, -EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/6, 0, -GAc_Elem[elem]/2,  EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/3]])#MODIFIE
-        
+        elif timoshenko and SelRedInt:
+            k_elem_loc[elem] = np.array([[0 for _in in range(6)] for _out in range(6)])
         
             
         # Stiffness matrices in the global reference system
