@@ -430,25 +430,46 @@ compute the response of the beam with the Python script distributed for the firs
 frames.py”), i.e. using Euler-Bernoulli finite elements (FEs). Use a mesh of 2 elements as well as a mesh of 20 elements.
 Compare the three results and comment."""
 
+# Calcul de la solution exacte
+def exact_solution_EB(x,L,P,EI):
+    """Formule vient de wikipedia"""
+    uy = np.zeros_like(x)
+    theta = np.zeros_like(x)
+    
+    for i in range(len(x)):
+        if x[i] <= L/2:
+            uy[i] = (-P*x[i]/(48*EI))*(3*L**2 - 4*x[i]**2)
+            theta[i] = (-P/(48*EI))*(3*L**2 - 12*x[i]**2)
+        else:
+            uy[i] = (P/(48*EI))*(L**3 - 9*x[i]*L**2 + 12*L*x[i]**2 - 4*x[i]**3)
+            theta[i] = (P/(48*EI))*(-9*L**2 + 24*L*x[i] - 12*x[i]**2)
+    return uy, theta
+
 U2, P2, P_r2, p_loc2, L_Elem2, Scale2, Coord2, Connect2 = calcul(3,10,False)
 U20, P20, P_r20, p_loc20, L_Elem20, Scale20, Coord20, Connect20 = calcul(21,10,False)
-# Plot u(x) pour les deux maillages
+x = np.linspace(0,10,100)
+UEB, thetaEB = exact_solution_EB(x,10,40e3,EI)
+# Plot u(x) pour les deux maillages et la solution exacte
 plt.plot(Coord20[0], U20[1::3], label = '20 elements')
 plt.plot(Coord2[0], U2[1::3], label = '2 elements')
+plt.plot(x, UEB, label = 'Exact solution')
 plt.title('Transverse displacement field')
 plt.xlabel('x [m]')
 plt.ylabel('uy(x) [m]')
 plt.legend()
 plt.show()
 
-# Plot theta(x) pour les deux maillages
+# Plot theta(x) pour les deux maillages et la solution exacte
 plt.plot(Coord20[0], U20[2::3], label = '20 elements')
 plt.plot(Coord2[0], U2[2::3], label = '2 elements')
+plt.plot(x, thetaEB, label = 'Exact solution')
 plt.title('Rotational field')
 plt.xlabel('x [m]')
 plt.ylabel('theta(x) [rad]')
 plt.legend()
 plt.show()
+
+
 
 """(b) (7.5 points) Implement, in the same Python script, the stiffness matrix corresponding to a Timoshenko finite element,
 assuming a linear approximation both for the rotations 𝜃(𝑥) and the transverse displacements 𝑢𝑦0(𝑥). Plot the transverse
@@ -456,6 +477,53 @@ displacements and rotations for a mesh of 2, 8, 20, and 200 FEs, together with t
 obtained with the four meshes, and with respect to the exact solution. Discuss whether the FE responses satisfy the
 compatibility conditions, namely: is the displacement field continuous within each element and between elements?, does it
 satisfy the support conditions?"""
+
+def exact_solution_T(x,L,P,EI,GAc):
+    """Pas verifié la formule, c'est copilot qui l'a sorti"""
+    uy = np.zeros_like(x)
+    theta = np.zeros_like(x)
+    
+    for i in range(len(x)):
+        if x[i] <= L/2:
+            uy[i] = (-P*x[i]/(48*EI))*(3*L**2 - 4*x[i]**2) - (P*x[i]**2/(6*EI))*(1 - 4*GAc/EI)
+            theta[i] = (-P/(48*EI))*(3*L**2 - 12*x[i]**2) - (P*x[i]/(6*EI))*(1 - 4*GAc/EI)
+        else:
+            uy[i] = (P/(48*EI))*(L**3 - 9*x[i]*L**2 + 12*L*x[i]**2 - 4*x[i]**3) - (P*x[i]**2/(6*EI))*(1 - 4*GAc/EI)
+            theta[i] = (P/(48*EI))*(-9*L**2 + 24*L*x[i] - 12*x[i]**2) - (P*x[i]/(6*EI))*(1 - 4*GAc/EI)
+    return uy, theta
+
+U2T, P2T, P_r2T, p_loc2T, L_Elem2T, Scale2T, Coord2T, Connect2T = calcul(3,10,True)
+U8T, P8T, P_r8T, p_loc8T, L_Elem8T, Scale8T, Coord8T, Connect8T = calcul(9,10,True)
+U20T, P20T, P_r20T, p_loc20T, L_Elem20T, Scale20T, Coord20T, Connect20T = calcul(21,10,True)
+U200T, P200T, P_r200T, p_loc200T, L_Elem200T, Scale200T, Coord200T, Connect200T = calcul(201,10,True)
+x = np.linspace(0,10,100)
+UT, thetaT = exact_solution_T(x,10,40e3,EI,GAc)
+# Plot u(x) pour les deux maillages et la solution exacte
+plt.plot(Coord2T[0], U2T[1::3], label = '2 elements')
+plt.plot(Coord8T[0], U8T[1::3], label = '8 elements')
+plt.plot(Coord20T[0], U20T[1::3], label = '20 elements')
+plt.plot(Coord200T[0], U200T[1::3], label = '200 elements')
+plt.plot(x, UT, label = 'Exact solution')
+plt.title('Transverse displacement field')
+plt.xlabel('x [m]')
+plt.ylabel('uy(x) [m]')
+plt.legend()
+plt.show()
+
+# Plot theta(x) pour les deux maillages et la solution exacte
+plt.plot(Coord2T[0], U2T[2::3], label = '2 elements')
+plt.plot(Coord8T[0], U8T[2::3], label = '8 elements')
+plt.plot(Coord20T[0], U20T[2::3], label = '20 elements')
+plt.plot(Coord200T[0], U200T[2::3], label = '200 elements')
+plt.plot(x, thetaT, label = 'Exact solution')
+plt.title('Rotational field')
+plt.xlabel('x [m]')
+plt.ylabel('theta(x) [rad]')
+plt.legend()
+plt.show()
+
+
+
 
 """(c) (7.5 points) Consider the response obtained in (b) with 8 FEs. Show the evolution of the bending moment and shear
 force along the beam. Discuss if the FE response satisfies the equilibrium conditions, namely: locally (within each element),
