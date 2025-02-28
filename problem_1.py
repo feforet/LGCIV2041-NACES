@@ -326,8 +326,12 @@ def calcul(n,L,timoshenko, SelRedInt=False):
                                         [0, -GAc_Elem[elem]/L_Elem[elem], -GAc_Elem[elem]/2, 0, GAc_Elem[elem]/L_Elem[elem], -GAc_Elem[elem]/2],
                                         [0,GAc_Elem[elem]/2, -EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/6, 0, -GAc_Elem[elem]/2,  EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/3]])#MODIFIE
         elif timoshenko and SelRedInt:
-            k_elem_loc[elem] = np.array([[0 for _in in range(6)] for _out in range(6)])
-        
+            k_elem_loc[elem] = np.array([[AE_Elem[elem]/L_Elem[elem], 0, 0, -AE_Elem[elem]/L_Elem[elem], 0, 0],
+                                        [0,GAc_Elem[elem]/L_Elem[elem], GAc_Elem[elem]/2, 0, -GAc_Elem[elem]/L_Elem[elem],  GAc_Elem[elem]/2],
+                                        [0,GAc_Elem[elem]/2, EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/4, 0,   -GAc_Elem[elem]/2,  -EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/4],
+                                        [-AE_Elem[elem]/L_Elem[elem], 0, 0, AE_Elem[elem]/L_Elem[elem], 0, 0],
+                                        [0, -GAc_Elem[elem]/L_Elem[elem], -GAc_Elem[elem]/2, 0, GAc_Elem[elem]/L_Elem[elem], -GAc_Elem[elem]/2],
+                                        [0,GAc_Elem[elem]/2, -EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/4, 0, -GAc_Elem[elem]/2,  EI_Elem[elem]/L_Elem[elem]+L_Elem[elem]*GAc_Elem[elem]/4]])
             
         # Stiffness matrices in the global reference system
         k_elem_glob[elem] = np.transpose(r_C[elem]) @ k_elem_loc[elem] @ r_C[elem]
