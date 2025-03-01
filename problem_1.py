@@ -67,7 +67,8 @@ def PlotDeformed(coord, connect, displ, scale) :
 # DEFINITIONS
 # Display of the shear forces
 
-def PlotShear(coord, connect, Shear) : 
+def PlotShear(coord, connect, Shear) :
+    raise NotImplementedError
     
     for i in range(len(connect)) : 
         plt.plot( [coord[0][connect[i][0]] , coord[0][connect[i][1]]] , 
@@ -98,8 +99,9 @@ def PlotShear(coord, connect, Shear) :
     plt.grid()
     plt.show()
 
-def PlotBending(coord, connect, Bending, Shear) : 
-    
+def PlotBending(coord, connect, Bending, Shear) :
+    raise NotImplementedError
+
     for i in range(len(connect)) : 
         plt.plot( [coord[0][connect[i][0]] , coord[0][connect[i][1]]] , 
                 [coord[1][connect[i][0]] , coord[1][connect[i][1]]] , 
@@ -135,6 +137,34 @@ def PlotBending(coord, connect, Bending, Shear) :
     plt.title('Bending moments')
     plt.xlabel('x [m]')
     plt.ylabel('Bending moment [Nm]')
+    plt.grid()
+    plt.show()
+
+def plot_bending(coord, connect, xs, bending):
+    for i in range(len(connect)) : 
+        plt.plot( [coord[0][connect[i][0]] , coord[0][connect[i][1]]] , 
+                [coord[1][connect[i][0]] , coord[1][connect[i][1]]] , 
+                '#000000' )
+    plt.plot(coord[0], coord[1], 'ro')
+    plt.plot(np.ravel(xs, order='C'), np.ravel(bending, order='C'), 'r')
+    plt.title('Bending moments')
+    plt.xlabel('x [m]')
+    plt.ylabel('Bending moment [Nm]')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+def plot_shear(coord, connect, xs, shear):
+    for i in range(len(connect)) : 
+        plt.plot( [coord[0][connect[i][0]] , coord[0][connect[i][1]]] , 
+                [coord[1][connect[i][0]] , coord[1][connect[i][1]]] , 
+                '#000000' ) 
+    plt.plot(coord[0], coord[1], 'ro')
+    plt.plot(np.ravel(xs, order='C'), np.ravel(shear, order='C'), 'g')
+    plt.title('Shear forces')
+    plt.xlabel('x [m]')
+    plt.ylabel('Shear force [N]')
+    plt.legend()
     plt.grid()
     plt.show()
 
@@ -546,6 +576,7 @@ between elements, and the natural boundary conditions."""
 def computeBendingShear_T(u_loc, L_Elem, Connect):
     bending = np.zeros((len(Connect),2))
     shear = np.zeros((len(Connect),2))
+    xs = np.zeros((len(Connect),2))
     for i in range(len(Connect)):
         L = L_Elem[i]
         u = u_loc[i]
@@ -553,11 +584,13 @@ def computeBendingShear_T(u_loc, L_Elem, Connect):
         bending[i][1] = EI/L * (u[5] - u[2])
         shear[i][0] = GAc * (-1/L * u[1] - u[2] + 1/L * u[4])
         shear[i][1] = GAc * (-1/L * u[1] + 1/L * U[4] - u[5])
-    return bending, shear
+        xs[i][0] = i*L 
+        xs[i][1] = (i+1)*L
+    return bending, shear, xs
 
-bending8T, shear8T = computeBendingShear_T(u_loc8T, L_Elem8T, Connect8T)
-PlotShear(Coord8T, Connect8T, shear8T)
-PlotBending(Coord8T, Connect8T, bending8T, shear8T)
+bending8T, shear8T, xs8T = computeBendingShear_T(u_loc8T, L_Elem8T, Connect8T)
+plot_bending(Coord8T, Connect8T, xs8T, bending8T)
+plot_shear(Coord8T, Connect8T, xs8T, shear8T)
 
 """(d) (7.5 points) Consider the following alternative beam lengths: L = 2 m, 20 m, and 200 m. For each length, and considering
 always a mesh of 200 FEs, plot in the same graph the transverse displacement along the beam for: Timoshenko FEs, Euler-
