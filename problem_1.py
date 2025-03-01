@@ -395,7 +395,7 @@ def calcul(n,L,timoshenko, SelRedInt=False):
         p_loc[i] = k_elem_loc[i] @ u_loc[i]
         
         #print(p_loc[i])
-    return U, P, P_r, p_loc, L_Elem, Scale, Coord, Connect
+    return U, u_loc, P, P_r, p_loc, L_Elem, Scale, Coord, Connect
         
 """### 3: DISPLAY
 Display of the internal forces per element
@@ -432,7 +432,7 @@ print(Bending)
 
 
 timoshenko = False
-U, P, P_r, p_loc, L_Elem, Scale, Coord, Connect = calcul(21,10,timoshenko)
+U, u_loc, P, P_r, p_loc, L_Elem, Scale, Coord, Connect = calcul(21,10,timoshenko)
 # Print the deformed shape of the structure
 Disp = np.zeros((2,len(Coord[0])))
 # Pas besoin du deplacement de rotation
@@ -493,8 +493,8 @@ def PlotTheta(Coords, Us, exactEB=None, exactT=None, lab=None):
     plt.grid()
     plt.show()
 
-U2, P2, P_r2, p_loc2, L_Elem2, Scale2, Coord2, Connect2 = calcul(3,10,False)
-U20, P20, P_r20, p_loc20, L_Elem20, Scale20, Coord20, Connect20 = calcul(21,10,False)
+U2, u_loc2, P2, P_r2, p_loc2, L_Elem2, Scale2, Coord2, Connect2 = calcul(3,10,False)
+U20, u_loc20, P20, P_r20, p_loc20, L_Elem20, Scale20, Coord20, Connect20 = calcul(21,10,False)
 x = np.linspace(0,10,100)
 UEB, thetaEB = exact_solution_EB(x,10,40e3,EI)
 # Plot u(x) pour les deux maillages et la solution exacte
@@ -525,10 +525,10 @@ def exact_solution_T(x,L,P,EI,GAc):
             theta[i] = (P/(48*EI))*(-9*L**2 + 24*L*x[i] - 12*x[i]**2) - (P*x[i]/(6*EI))*(1 - 4*GAc/EI)
     return uy, theta
 
-U2T, P2T, P_r2T, p_loc2T, L_Elem2T, Scale2T, Coord2T, Connect2T = calcul(3,10,True)
-U8T, P8T, P_r8T, p_loc8T, L_Elem8T, Scale8T, Coord8T, Connect8T = calcul(9,10,True)
-U20T, P20T, P_r20T, p_loc20T, L_Elem20T, Scale20T, Coord20T, Connect20T = calcul(21,10,True)
-U200T, P200T, P_r200T, p_loc200T, L_Elem200T, Scale200T, Coord200T, Connect200T = calcul(201,10,True)
+U2T, u_loc2T, P2T, P_r2T, p_loc2T, L_Elem2T, Scale2T, Coord2T, Connect2T = calcul(3,10,True)
+U8T, u_loc8T, P8T, P_r8T, p_loc8T, L_Elem8T, Scale8T, Coord8T, Connect8T = calcul(9,10,True)
+U20T, u_loc20T, P20T, P_r20T, p_loc20T, L_Elem20T, Scale20T, Coord20T, Connect20T = calcul(21,10,True)
+U200T, u_loc200T, P200T, P_r200T, p_loc200T, L_Elem200T, Scale200T, Coord200T, Connect200T = calcul(201,10,True)
 x = np.linspace(0,10,100)
 UT, thetaT = exact_solution_T(x,10,40e3,EI,GAc)
 
@@ -543,17 +543,19 @@ PlotTheta([Coord2T, Coord8T, Coord20T, Coord200T], [U2T, U8T, U20T, U200T], exac
 force along the beam. Discuss if the FE response satisfies the equilibrium conditions, namely: locally (within each element),
 between elements, and the natural boundary conditions."""
 
-def computeBendingShear(p_loc, L_Elem, Connect):
-    shear = np.zeros((len(Connect),2))
+def computeBendingShear_T(u_loc, L_Elem, Connect):
     bending = np.zeros((len(Connect),2))
+    shear = np.zeros((len(Connect),2))
     for i in range(len(Connect)):
-        shear[i][0] = p_loc[i][1]
-        shear[i][1] = -p_loc[i][4]
-        bending[i][0] = p_loc[i][2]
-        bending[i][1] = -p_loc[i][5]
+        L = L_Elem[i]
+        u = u_loc[i]
+        bending[i][0] = EI/L * (u[5] - u[2])
+        bending[i][1] = EI/L * (u[5] - u[2])
+        shear[i][0] = GAc * (-1/L * u[1] - u[2] + 1/L * u[4])
+        shear[i][1] = GAc * (-1/L * u[1] + 1/L * U[4] - u[5])
     return bending, shear
 
-bending8T, shear8T = computeBendingShear(p_loc8T, L_Elem8T, Connect8T)
+bending8T, shear8T = computeBendingShear_T(u_loc8T, L_Elem8T, Connect8T)
 PlotShear(Coord8T, Connect8T, shear8T)
 PlotBending(Coord8T, Connect8T, bending8T, shear8T)
 
@@ -565,16 +567,16 @@ engineer if you did not have access to the exact solution."""
 x_2m = np.linspace(0,2,201)
 x_20m = np.linspace(0,20,201)
 x_200m = np.linspace(0,200,201)
-U_2m_T, _, _, _, _, _, Coord_2m_T, _ = calcul(201,2,True)
-U_2m_EB, _, _, _, _, _, Coord_2m_EB, _ = calcul(201,2,False)
+U_2m_T, _, _, _, _, _, _, Coord_2m_T, _ = calcul(201,2,True)
+U_2m_EB, _, _, _, _, _, _, Coord_2m_EB, _ = calcul(201,2,False)
 U_2m_exact_EB, _ = exact_solution_EB(x_2m,2,40e3,EI)
 U_2m_exact_T, _ = exact_solution_T(x_2m,2,40e3,EI,GAc)
-U_20m_T, _, _, _, _, _, Coord_20m_T, _ = calcul(201,20,True)
-U_20m_EB, _, _, _, _, _, Coord_20m_EB, _ = calcul(201,20,False)
+U_20m_T, _, _, _, _, _, _, Coord_20m_T, _ = calcul(201,20,True)
+U_20m_EB, _, _, _, _, _, _, Coord_20m_EB, _ = calcul(201,20,False)
 U_20m_exact_EB, _ = exact_solution_EB(x_20m,20,40e3,EI)
 U_20m_exact_T, _ = exact_solution_T(x_20m,20,40e3,EI,GAc)
-U_200m_T, _, _, _, _, _, Coord_200m_T, _ = calcul(201,200,True)
-U_200m_EB, _, _, _, _, _, Coord_200m_EB, _ = calcul(201,200,False)
+U_200m_T, _, _, _, _, _, _, Coord_200m_T, _ = calcul(201,200,True)
+U_200m_EB, _, _, _, _, _, _, Coord_200m_EB, _ = calcul(201,200,False)
 U_200m_exact_EB, _ = exact_solution_EB(x_200m,200,40e3,EI)
 U_200m_exact_T, _ = exact_solution_T(x_200m,200,40e3,EI,GAc)
 
@@ -585,9 +587,9 @@ PlotUy([Coord_200m_T, Coord_200m_EB], [U_200m_T, U_200m_EB], exactEB=[x_200m, U_
 """(e) (7.5 points) Compute analytically and show the Timoshenko stiffness matrix considering selective reduced integration,
 as discussed in the lecture. Implement it in the Python script and plot again the transverse displacement for the same cases
 and mesh of question (d). Comment on the results obtained."""
-U_2m_T_SRI, _, _, _, _, _, Coord_2m_T_SRI, _ = calcul(201,2,True,True)
-U_20m_T_SRI, _, _, _, _, _, Coord_20m_T_SRI, _ = calcul(201,20,True,True)
-U_200m_T_SRI, _, _, _, _, _, Coord_200m_T_SRI, _ = calcul(201,200,True,True)
+U_2m_T_SRI, _, _, _, _, _, _, Coord_2m_T_SRI, _ = calcul(201,2,True,True)
+U_20m_T_SRI, _, _, _, _, _, _, Coord_20m_T_SRI, _ = calcul(201,20,True,True)
+U_200m_T_SRI, _, _, _, _, _, _, Coord_200m_T_SRI, _ = calcul(201,200,True,True)
 
 PlotUy([Coord_2m_T, Coord_2m_EB], [U_2m_T_SRI, U_2m_EB], exactEB=[x_2m, U_2m_exact_EB], exactT=[x_2m, U_2m_exact_T], lab=['Timoshenko with selective reduced integration', 'Euler-Bernoulli'])
 PlotUy([Coord_20m_T, Coord_20m_EB], [U_20m_T_SRI, U_20m_EB], exactEB=[x_20m, U_20m_exact_EB], exactT=[x_20m, U_20m_exact_T], lab=['Timoshenko with selective reduced integration', 'Euler-Bernoulli'])
