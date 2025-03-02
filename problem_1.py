@@ -147,10 +147,9 @@ def plot_bending(coord, connect, xs, bending):
                 '#000000' )
     plt.plot(coord[0], coord[1], 'ro')
     plt.plot(np.ravel(xs, order='C'), np.ravel(bending, order='C'), 'r')
-    plt.title('Bending moments')
+    plt.title('Bending moment along the beam')
     plt.xlabel('x [m]')
     plt.ylabel('Bending moment [Nm]')
-    plt.legend()
     plt.grid()
     plt.show()
 
@@ -161,10 +160,9 @@ def plot_shear(coord, connect, xs, shear):
                 '#000000' ) 
     plt.plot(coord[0], coord[1], 'ro')
     plt.plot(np.ravel(xs, order='C'), np.ravel(shear, order='C'), 'g')
-    plt.title('Shear forces')
+    plt.title('Shear force along the beam')
     plt.xlabel('x [m]')
     plt.ylabel('Shear force [N]')
-    plt.legend()
     plt.grid()
     plt.show()
 
