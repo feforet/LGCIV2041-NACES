@@ -542,17 +542,17 @@ compatibility conditions, namely: is the displacement field continuous within ea
 satisfy the support conditions?"""
 
 def exact_solution_T(x,L,P,EI,GAc):
-    """Pas verifié la formule, c'est copilot qui l'a sorti"""
+    """Déplacement et rotation exacts pour une poutre de longueur L soumise à une force P en son milieu Timoshenko"""
     uy = np.zeros_like(x)
     theta = np.zeros_like(x)
     
     for i in range(len(x)):
         if x[i] <= L/2:
-            uy[i] = (-P*x[i]/(48*EI))*(3*L**2 - 4*x[i]**2) - (P*x[i]**2/(6*EI))*(1 - 4*GAc/EI)
-            theta[i] = (-P/(48*EI))*(3*L**2 - 12*x[i]**2) - (P*x[i]/(6*EI))*(1 - 4*GAc/EI)
+            uy[i] = (P*x[i]/(48*EI))*(-3*L**2 + 4*x[i]**2) - P*x[i]/(2*GAc)
+            theta[i] = (-P/(48*EI))*(3*L**2 - 12*x[i]**2)
         else:
-            uy[i] = (P/(48*EI))*(L**3 - 9*x[i]*L**2 + 12*L*x[i]**2 - 4*x[i]**3) - (P*x[i]**2/(6*EI))*(1 - 4*GAc/EI)
-            theta[i] = (P/(48*EI))*(-9*L**2 + 24*L*x[i] - 12*x[i]**2) - (P*x[i]/(6*EI))*(1 - 4*GAc/EI)
+            uy[i] = (P/(48*EI))*(L**3 - 9*x[i]*L**2 + 12*L*x[i]**2 - 4*x[i]**3) + P*x[i]/(2*GAc)- P*L/(2*GAc)
+            theta[i] = (P/(48*EI))*(-9*L**2 + 24*L*x[i] - 12*x[i]**2)
     return uy, theta
 
 U2T, u_loc2T, P2T, P_r2T, p_loc2T, L_Elem2T, Scale2T, Coord2T, Connect2T = calcul(3,10,True)
@@ -564,7 +564,7 @@ UT, thetaT = exact_solution_T(x,10,40e3,EI,GAc)
 
 # Plot u(x) pour les deux maillages et la solution exacte
 PlotUy([Coord2T, Coord8T, Coord20T, Coord200T], [U2T, U8T, U20T, U200T], exactT=[x, UT], lab=['2 elements', '8 elements', '20 elements', '200 elements'])
-
+PlotUy([Coord2T, Coord8T, Coord20T, Coord200T], [U2T, U8T, U20T, U200T], lab=['2 elements', '8 elements', '20 elements', '200 elements'])
 # Plot theta(x) pour les deux maillages et la solution exacte
 PlotTheta([Coord2T, Coord8T, Coord20T, Coord200T], [U2T, U8T, U20T, U200T], exactT=[x, thetaT], lab=['2 elements', '8 elements', '20 elements', '200 elements'])
 
