@@ -140,7 +140,7 @@ def PlotBending(coord, connect, Bending, Shear) :
     plt.grid()
     plt.show()
 
-def plot_bending(coord, connect, xs, bending,save = None):
+def plot_bending(coord, connect, xs, bending):
     for i in range(len(connect)) : 
         plt.plot( [coord[0][connect[i][0]] , coord[0][connect[i][1]]] , 
                 [coord[1][connect[i][0]] , coord[1][connect[i][1]]] , 
@@ -151,11 +151,9 @@ def plot_bending(coord, connect, xs, bending,save = None):
     plt.xlabel('x [m]')
     plt.ylabel('Bending moment [Nm]')
     plt.grid()
-    if save is not None:
-        plt.savefig(save,bbox_inches='tight')
     plt.show()
 
-def plot_shear(coord, connect, xs, shear,save = None):
+def plot_shear(coord, connect, xs, shear):
     for i in range(len(connect)) : 
         plt.plot( [coord[0][connect[i][0]] , coord[0][connect[i][1]]] , 
                 [coord[1][connect[i][0]] , coord[1][connect[i][1]]] , 
@@ -166,8 +164,6 @@ def plot_shear(coord, connect, xs, shear,save = None):
     plt.xlabel('x [m]')
     plt.ylabel('Shear force [N]')
     plt.grid()
-    if save is not None:
-        plt.savefig(save,bbox_inches='tight')
     plt.show()
 
 """### 1: INPUT
@@ -178,9 +174,9 @@ All parameters that need to be set by the user are listed in this section with #
 # Parameters of the problem
 
 # MATERIAL
-EA = 4e10 # [N]
-EI = 4e9 # [Nm^2]
-v = 0.2 # [/]
+EA = 1 * 0.3 * 0.8# [N]
+EI = 1 * (0.3 *0.8**3)/12 # [Nm^2]
+v = 0.25 # [/]
 k = 5/6 # [/]
 GA = EA/(2*(1+v)) # [N]
 GAc = GA*k # [N]
@@ -235,7 +231,7 @@ def calcul(n,L,timoshenko, SelRedInt=False):
     # Fixed degrees of freedom
     # Structure:
     #Fixed_DoF = np.array([0,1,7])
-    Fixed_DoF = np.array([0,1,No_Ddl-2])
+    Fixed_DoF = np.array([0,1,2])
 
     # Free degrees of freedom
     Free_DoF = np.delete(Num_Ddl, Fixed_DoF)
@@ -254,8 +250,8 @@ def calcul(n,L,timoshenko, SelRedInt=False):
     # Structure:
     ## Ici on prend en compte que les ddls libres, pas ceux bloqué par les réactions d'appui
     P_f = np.zeros(len(Free_DoF))
-    P_f[(No_Ddl//2)-2] = -40e3 # [N]
-    P_f[len(Free_DoF)-2] = -2000e3 # [N]
+    P_f[No_Ddl-2-3] = -10e3 # [N]
+    #P_f[len(Free_DoF)-2] = -2000e3 # [N]
 
 
     # Building other vectors:
@@ -464,7 +460,7 @@ print(Bending)
 
 
 timoshenko = False
-U, u_loc, P, P_r, p_loc, L_Elem, Scale, Coord, Connect = calcul(21,10,timoshenko)
+U, u_loc, P, P_r, p_loc, L_Elem, Scale, Coord, Connect = calcul(21,4,timoshenko)
 # Print the deformed shape of the structure
 Disp = np.zeros((2,len(Coord[0])))
 # Pas besoin du deplacement de rotation
@@ -473,7 +469,6 @@ Disp[1] = U[np.arange(len(Coord[0]))*3+1]
 plotdef = False
 if plotdef :
     PlotDeformed(Coord, Connect, Disp, Scale)
-    print(U[31])
 
 """(a) (7.5 points) Derive the exact solution for the transverse displacement field 𝑢𝑦0(𝑥) and for the rotational field 𝜃(𝑥). Then,
 compute the response of the beam with the Python script distributed for the first exercise session (“Python script to study
@@ -561,21 +556,16 @@ def exact_solution_T(x,L,P,EI,GAc):
     uy = np.zeros_like(x)
     theta = np.zeros_like(x)
     
-    for i in range(len(x)):
-        if x[i] <= L/2:
-            uy[i] = (P*x[i]/(48*EI))*(-3*L**2 + 4*x[i]**2) - P*x[i]/(2*GAc)
-            theta[i] = (-P/(48*EI))*(3*L**2 - 12*x[i]**2)
-        else:
-            uy[i] = (P/(48*EI))*(L**3 - 9*x[i]*L**2 + 12*L*x[i]**2 - 4*x[i]**3) + P*x[i]/(2*GAc)- P*L/(2*GAc)
-            theta[i] = (P/(48*EI))*(-9*L**2 + 24*L*x[i] - 12*x[i]**2)
+    uy = -P/(GAc) *x - L*P/(2*EI)* x**2 + P*x**3/(6*EI)
+    theta = -P*L/(EI) * x + P*x**2/(2*EI)
     return uy, theta
 
-U2T, u_loc2T, P2T, P_r2T, p_loc2T, L_Elem2T, Scale2T, Coord2T, Connect2T = calcul(3,10,True)
-U8T, u_loc8T, P8T, P_r8T, p_loc8T, L_Elem8T, Scale8T, Coord8T, Connect8T = calcul(9,10,True)
-U20T, u_loc20T, P20T, P_r20T, p_loc20T, L_Elem20T, Scale20T, Coord20T, Connect20T = calcul(21,10,True)
-U200T, u_loc200T, P200T, P_r200T, p_loc200T, L_Elem200T, Scale200T, Coord200T, Connect200T = calcul(201,10,True)
-x = np.linspace(0,10,100)
-UT, thetaT = exact_solution_T(x,10,40e3,EI,GAc)
+U2T, u_loc2T, P2T, P_r2T, p_loc2T, L_Elem2T, Scale2T, Coord2T, Connect2T = calcul(3,4,True)
+U8T, u_loc8T, P8T, P_r8T, p_loc8T, L_Elem8T, Scale8T, Coord8T, Connect8T = calcul(9,4,True)
+U20T, u_loc20T, P20T, P_r20T, p_loc20T, L_Elem20T, Scale20T, Coord20T, Connect20T = calcul(21,4,True)
+U200T, u_loc200T, P200T, P_r200T, p_loc200T, L_Elem200T, Scale200T, Coord200T, Connect200T = calcul(201,4,True)
+x = np.linspace(0,4,100)
+UT, thetaT = exact_solution_T(x,4,10e3,EI,GAc)
 
 plot_b = False
 if plot_b:
@@ -606,13 +596,13 @@ def computeBendingShear_T(u_loc, L_Elem, Connect):
     return bending, shear, xs
 
 
-bending8T, shear8T, xs8T = computeBendingShear_T(u_loc8T, L_Elem8T, Connect8T)
-print(u_loc8T)
-#bending8T, shear8T, xs8T = computeBendingShear_T(u_loc200T, L_Elem200T, Connect200T)
+bending8T, shear8T, xs8T = computeBendingShear_T(p_loc8T, L_Elem8T, Connect8T)
+bending8T, shear8T, xs8T = computeBendingShear_T(p_loc20T, L_Elem20T, Connect20T)
+
 plot_c = True
 if plot_c:
-    plot_bending(Coord8T, Connect8T, xs8T, bending8T,save='bending_T.pdf')
-    plot_shear(Coord8T, Connect8T, xs8T, shear8T,save='shear_T.pdf')
+    plot_bending(Coord8T, Connect8T, xs8T, bending8T)
+    plot_shear(Coord8T, Connect8T, xs8T, shear8T)
 
 """(d) (7.5 points) Consider the following alternative beam lengths: L = 2 m, 20 m, and 200 m. For each length, and considering
 always a mesh of 200 FEs, plot in the same graph the transverse displacement along the beam for: Timoshenko FEs, Euler-
