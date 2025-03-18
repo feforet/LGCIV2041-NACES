@@ -612,8 +612,8 @@ def computeBendingShear_T2(u_loc, L_Elem, Connect):
         u = u_loc[i]
         xs[i][0] = i*L 
         xs[i][1] = (i+1)*L
-        bending[i][0] = EI/L * (u[5] - u[2])
-        bending[i][1] = EI/L * (u[5] - u[2])
+        bending[i][0] = EI/Ltot * (u[5] - u[2])
+        bending[i][1] = EI/Ltot * (u[5] - u[2])
         shear[i][0] = GAc * (-1/Ltot * u[1] +  (xs[i][0]/Ltot -1)* u[2] + 1/Ltot * u[4]+ (-xs[i][0]/Ltot)* u[5])
         shear[i][1] = GAc * (-1/Ltot * u[1] +  (xs[i][1]/Ltot -1)* u[2] + 1/Ltot * u[4]+ (-xs[i][1]/Ltot)* u[5])
     return bending, shear, xs
