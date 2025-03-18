@@ -466,8 +466,10 @@ Disp = np.zeros((2,len(Coord[0])))
 # Pas besoin du deplacement de rotation
 Disp[0] = U[np.arange(len(Coord[0]))*3]
 Disp[1] = U[np.arange(len(Coord[0]))*3+1]
-PlotDeformed(Coord, Connect, Disp, Scale)
-print(U[31])
+plotdef = False
+if plotdef :
+    PlotDeformed(Coord, Connect, Disp, Scale)
+    print(U[31])
 
 """(a) (7.5 points) Derive the exact solution for the transverse displacement field 𝑢𝑦0(𝑥) and for the rotational field 𝜃(𝑥). Then,
 compute the response of the beam with the Python script distributed for the first exercise session (“Python script to study
@@ -476,7 +478,12 @@ Compare the three results and comment."""
 
 # Calcul de la solution exacte
 def exact_solution_EB(x,L,P,EI):
-    """Formule vient de wikipedia"""
+    """Excact solution for a beam of length L subjected to a force P in its middle Euler-Bernoulli
+    x : location along the beam [m]
+    L : length of the beam [m]
+    P : force applied in the middle of the beam [N]
+    EI : bending stiffness [Nm^2]
+    """
     uy = np.zeros_like(x)
     theta = np.zeros_like(x)
     
@@ -489,23 +496,25 @@ def exact_solution_EB(x,L,P,EI):
             theta[i] = (P/(48*EI))*(-9*L**2 + 24*L*x[i] - 12*x[i]**2)
     return uy, theta
 
-def PlotUy(Coords, Us, exactEB=None, exactT=None, lab=None):
+def PlotUy(Coords, Us, exactEB=None, exactT=None, lab=None,save = None):
     if lab is None:
         lab = ['' for i in range(len(Us)//3-1)]
     for i in range(len(Us)):
-        plt.plot(Coords[i][0], Us[i][1::3], label=lab[i])
+        plt.plot(Coords[i][0], Us[i][1::3]*1e3, label=lab[i])
     if exactEB is not None:
-        plt.plot(exactEB[0], exactEB[1], label = 'Exact solution for Euler-Bernoulli')
+        plt.plot(exactEB[0], exactEB[1]*1e3, label = 'Exact solution for Euler-Bernoulli')
     if exactT is not None:
-        plt.plot(exactT[0], exactT[1], label = 'Exact solution for Timoshenko')
+        plt.plot(exactT[0], exactT[1]*1e3, label = 'Exact solution for Timoshenko')
     plt.title('Transverse displacement field')
     plt.xlabel('x [m]')
-    plt.ylabel('uy(x) [m]')
+    plt.ylabel('uy(x) [mm]')
     plt.legend()
     plt.grid()
+    if save is not None:
+        plt.savefig(save,bbox_inches='tight')
     plt.show()
 
-def PlotTheta(Coords, Us, exactEB=None, exactT=None, lab=None):
+def PlotTheta(Coords, Us, exactEB=None, exactT=None, lab=None,save=None):
     if lab == None:
         lab = ['' for i in range(len(Us)//3-1)]
     for i in range(len(Us)):
@@ -519,17 +528,21 @@ def PlotTheta(Coords, Us, exactEB=None, exactT=None, lab=None):
     plt.ylabel('theta(x) [rad]')
     plt.legend()
     plt.grid()
+    if save is not None:
+        plt.savefig(save,bbox_inches='tight')
     plt.show()
 
 U2, u_loc2, P2, P_r2, p_loc2, L_Elem2, Scale2, Coord2, Connect2 = calcul(3,10,False)
 U20, u_loc20, P20, P_r20, p_loc20, L_Elem20, Scale20, Coord20, Connect20 = calcul(21,10,False)
 x = np.linspace(0,10,100)
 UEB, thetaEB = exact_solution_EB(x,10,40e3,EI)
-# Plot u(x) pour les deux maillages et la solution exacte
-PlotUy([Coord20, Coord2], [U20, U2], exactEB=[x, UEB], lab=['20 elements', '2 elements'])
+plot_a = False
+if plot_a:
+    # Plot u(x) pour les deux maillages et la solution exacte
+    PlotUy([Coord20, Coord2], [U20, U2], exactEB=[x, UEB], lab=['20 elements', '2 elements'], save='Uy_EB.pdf')
 
-# Plot theta(x) pour les deux maillages et la solution exacte
-PlotTheta([Coord20, Coord2], [U20, U2], exactEB=[x, thetaEB], lab=['20 elements', '2 elements'])
+    # Plot theta(x) pour les deux maillages et la solution exacte
+    PlotTheta([Coord20, Coord2], [U20, U2], exactEB=[x, thetaEB], lab=['20 elements', '2 elements'], save='Theta_EB.pdf')
 
 
 """(b) (7.5 points) Implement, in the same Python script, the stiffness matrix corresponding to a Timoshenko finite element,
@@ -560,11 +573,13 @@ U200T, u_loc200T, P200T, P_r200T, p_loc200T, L_Elem200T, Scale200T, Coord200T, C
 x = np.linspace(0,10,100)
 UT, thetaT = exact_solution_T(x,10,40e3,EI,GAc)
 
-# Plot u(x) pour les deux maillages et la solution exacte
-PlotUy([Coord2T, Coord8T, Coord20T, Coord200T], [U2T, U8T, U20T, U200T], exactT=[x, UT], lab=['2 elements', '8 elements', '20 elements', '200 elements'])
-PlotUy([Coord2T, Coord8T, Coord20T, Coord200T], [U2T, U8T, U20T, U200T], lab=['2 elements', '8 elements', '20 elements', '200 elements'])
-# Plot theta(x) pour les deux maillages et la solution exacte
-PlotTheta([Coord2T, Coord8T, Coord20T, Coord200T], [U2T, U8T, U20T, U200T], exactT=[x, thetaT], lab=['2 elements', '8 elements', '20 elements', '200 elements'])
+plot_b = False
+if plot_b:
+    # Plot u(x) pour les deux maillages et la solution exacte
+    PlotUy([Coord2T, Coord8T, Coord20T, Coord200T], [U2T, U8T, U20T, U200T], exactT=[x, UT], lab=['2 elements', '8 elements', '20 elements', '200 elements'], save='Uy_T.pdf')
+    #PlotUy([Coord2T, Coord8T, Coord20T, Coord200T], [U2T, U8T, U20T, U200T], lab=['2 elements', '8 elements', '20 elements', '200 elements'])
+    # Plot theta(x) pour les deux maillages et la solution exacte
+    PlotTheta([Coord2T, Coord8T, Coord20T, Coord200T], [U2T, U8T, U20T, U200T], exactT=[x, thetaT], lab=['2 elements', '8 elements', '20 elements', '200 elements'], save='Theta_T.pdf')
 
 
 """(c) (7.5 points) Consider the response obtained in (b) with 8 FEs. Show the evolution of the bending moment and shear
@@ -586,9 +601,29 @@ def computeBendingShear_T(u_loc, L_Elem, Connect):
         xs[i][1] = (i+1)*L
     return bending, shear, xs
 
-bending8T, shear8T, xs8T = computeBendingShear_T(u_loc8T, L_Elem8T, Connect8T)
-plot_bending(Coord8T, Connect8T, xs8T, bending8T)
-plot_shear(Coord8T, Connect8T, xs8T, shear8T)
+def computeBendingShear_T2(u_loc, L_Elem, Connect):
+    bending = np.zeros((len(Connect),2))
+    shear = np.zeros((len(Connect),2))
+    xs = np.zeros((len(Connect),2))
+    for i in range(len(Connect)):
+        L = L_Elem[i]
+        Ltot = L_Elem.sum()
+        print("Ltot", Ltot)
+        u = u_loc[i]
+        xs[i][0] = i*L 
+        xs[i][1] = (i+1)*L
+        bending[i][0] = EI/L * (u[5] - u[2])
+        bending[i][1] = EI/L * (u[5] - u[2])
+        shear[i][0] = GAc * (-1/Ltot * u[1] +  (xs[i][0]/Ltot -1)* u[2] + 1/Ltot * u[4]+ (-xs[i][0]/Ltot)* u[5])
+        shear[i][1] = GAc * (-1/Ltot * u[1] +  (xs[i][1]/Ltot -1)* u[2] + 1/Ltot * u[4]+ (-xs[i][1]/Ltot)* u[5])
+    return bending, shear, xs
+
+bending8T, shear8T, xs8T = computeBendingShear_T2(u_loc8T, L_Elem8T, Connect8T)
+#bending8T, shear8T, xs8T = computeBendingShear_T2(u_loc200T, L_Elem200T, Connect200T)
+plot_c = True
+if plot_c:
+    plot_bending(Coord8T, Connect8T, xs8T, bending8T)
+    plot_shear(Coord8T, Connect8T, xs8T, shear8T)
 
 """(d) (7.5 points) Consider the following alternative beam lengths: L = 2 m, 20 m, and 200 m. For each length, and considering
 always a mesh of 200 FEs, plot in the same graph the transverse displacement along the beam for: Timoshenko FEs, Euler-
@@ -611,9 +646,12 @@ U_200m_EB, _, _, _, _, _, _, Coord_200m_EB, _ = calcul(201,200,False)
 U_200m_exact_EB, _ = exact_solution_EB(x_200m,200,40e3,EI)
 U_200m_exact_T, _ = exact_solution_T(x_200m,200,40e3,EI,GAc)
 
-PlotUy([Coord_2m_T, Coord_2m_EB], [U_2m_T, U_2m_EB], exactEB=[x_2m, U_2m_exact_EB], exactT=[x_2m, U_2m_exact_T], lab=['Timoshenko', 'Euler-Bernoulli'])
-PlotUy([Coord_20m_T, Coord_20m_EB], [U_20m_T, U_20m_EB], exactEB=[x_20m, U_20m_exact_EB], exactT=[x_20m, U_20m_exact_T], lab=['Timoshenko', 'Euler-Bernoulli'])
-PlotUy([Coord_200m_T, Coord_200m_EB], [U_200m_T, U_200m_EB], exactEB=[x_200m, U_200m_exact_EB], exactT=[x_200m, U_200m_exact_T], lab=['Timoshenko', 'Euler-Bernoulli'])
+plot_d = False
+if plot_d:
+    PlotUy([Coord_2m_T, Coord_2m_EB], [U_2m_T, U_2m_EB], exactEB=[x_2m, U_2m_exact_EB], exactT=[x_2m, U_2m_exact_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'], save='Uy_2m.pdf')
+    PlotUy([Coord_20m_T, Coord_20m_EB], [U_20m_T, U_20m_EB], exactEB=[x_20m, U_20m_exact_EB], exactT=[x_20m, U_20m_exact_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'],save='Uy_20m.pdf')
+    PlotUy([Coord_200m_T, Coord_200m_EB], [U_200m_T, U_200m_EB], exactEB=[x_200m, U_200m_exact_EB], exactT=[x_200m, U_200m_exact_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'],save='Uy_200m.pdf')
+    #PlotUy([Coord_200m_T, Coord_200m_EB], [U_200m_T, U_200m_EB], exactEB=[x_200m, U_200m_exact_EB], lab=['Timoshenko', 'Euler-Bernoulli'])
 
 """(e) (7.5 points) Compute analytically and show the Timoshenko stiffness matrix considering selective reduced integration,
 as discussed in the lecture. Implement it in the Python script and plot again the transverse displacement for the same cases
@@ -622,9 +660,11 @@ U_2m_T_SRI, _, _, _, _, _, _, Coord_2m_T_SRI, _ = calcul(201,2,True,True)
 U_20m_T_SRI, _, _, _, _, _, _, Coord_20m_T_SRI, _ = calcul(201,20,True,True)
 U_200m_T_SRI, _, _, _, _, _, _, Coord_200m_T_SRI, _ = calcul(201,200,True,True)
 
-PlotUy([Coord_2m_T, Coord_2m_EB], [U_2m_T_SRI, U_2m_EB], exactEB=[x_2m, U_2m_exact_EB], exactT=[x_2m, U_2m_exact_T], lab=['Timoshenko with selective reduced integration', 'Euler-Bernoulli'])
-PlotUy([Coord_20m_T, Coord_20m_EB], [U_20m_T_SRI, U_20m_EB], exactEB=[x_20m, U_20m_exact_EB], exactT=[x_20m, U_20m_exact_T], lab=['Timoshenko with selective reduced integration', 'Euler-Bernoulli'])
-PlotUy([Coord_200m_T, Coord_200m_EB], [U_200m_T_SRI, U_200m_EB], exactEB=[x_200m, U_200m_exact_EB], exactT=[x_200m, U_200m_exact_T], lab=['Timoshenko with selective reduced integration', 'Euler-Bernoulli'])
+plot_e = False
+if plot_e:
+    PlotUy([Coord_2m_T, Coord_2m_EB], [U_2m_T_SRI, U_2m_EB], exactEB=[x_2m, U_2m_exact_EB], exactT=[x_2m, U_2m_exact_T], lab=['Timoshenko with selective reduced integration', 'Euler-Bernoulli FEs'], save='Uy_2m_SRI.pdf')
+    PlotUy([Coord_20m_T, Coord_20m_EB], [U_20m_T_SRI, U_20m_EB], exactEB=[x_20m, U_20m_exact_EB], exactT=[x_20m, U_20m_exact_T], lab=['Timoshenko with selective reduced integration', 'Euler-Bernoulli FEs'], save='Uy_20m_SRI.pdf')
+    PlotUy([Coord_200m_T, Coord_200m_EB], [U_200m_T_SRI, U_200m_EB], exactEB=[x_200m, U_200m_exact_EB], exactT=[x_200m, U_200m_exact_T], lab=['Timoshenko with selective reduced integration', 'Euler-Bernoulli FEs'], save='Uy_200m_SRI.pdf')
 
 """(f) (22.5 points) Adapt the Python script to compute the geometrically nonlinear response of the beam using a corotational
 formulation. Consider Euler-Bernoulli FEs. Show the transverse displacements for a mesh of 2 elements as well as for a
