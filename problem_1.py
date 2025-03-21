@@ -20,6 +20,7 @@ Before starting, it is also necessary to run all the cells signaled with #DEFINI
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.linalg import inv
+import time
 
 # DEFINITIONS
 # Display of the element undeformed configuration based on the connectivity (incidence) matrix
@@ -240,8 +241,8 @@ def calcul(n,L,timoshenko, SelRedInt=False):
     # Free degrees of freedom
     Free_DoF = np.delete(Num_Ddl, Fixed_DoF)
 
-    print("The free degrees of freedom are:")
-    print(Free_DoF)
+    #print("The free degrees of freedom are:")
+    #print(Free_DoF)
 
     # Nodal loads
 
@@ -536,8 +537,19 @@ def PlotTheta(Coords, Us, exactEB=None, exactT=None, lab=None,save=None):
         plt.savefig(save,bbox_inches='tight')
     plt.show()
 
+start_time = time.time()  # Temps de début
 U2, u_loc2, P2, P_r2, p_loc2, L_Elem2, Scale2, Coord2, Connect2 = calcul(3,10,False)
+end_time = time.time()  # Temps de fin
+elapsed_time = end_time - start_time  # Temps écoulé
+print(f"Temps écoulé avec 2 éléments : {elapsed_time:.4f} secondes")
+start_time2 = time.time()  # Temps de début
 U20, u_loc20, P20, P_r20, p_loc20, L_Elem20, Scale20, Coord20, Connect20 = calcul(21,10,False)
+end_time2 = time.time()  # Temps de fin
+elapsed_time2 = end_time2 - start_time2  # Temps écoulé
+print(f"Temps écoulé avec 20 éléments : {elapsed_time2:.4f} secondes")
+
+
+
 x = np.linspace(0,10,100)
 UEB, thetaEB = exact_solution_EB(x,10,40e3,EI)
 plot_a = False
