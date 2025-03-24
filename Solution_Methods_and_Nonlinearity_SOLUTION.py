@@ -54,9 +54,9 @@ def Newton_Raphson_Ramberg_Osgood(theta_applied, tolerance_theta, theta_y, gamma
 # ====== INPUT PARAMETERS: START ======
 # ====================================
 # Account for nonlinear geometric effects (large displacements):
-Consider_non_linear_geometric_effects = True
+Consider_non_linear_geometric_effects = False
 # Use classical Newton-Raphson (1) or Displacement-Control method (2):
-Classical_NR_or_Disp_Control = 2
+Classical_NR_or_Disp_Control = 1
 # Increments of lateral displacement in [m] (for Newton-Raphson method)
 F_lat = np.linspace(0, 900.0, num = 46) # Use for NR with linear geometry
 # Increments of lateral displacement in [m] (for Displacement-Control method)
@@ -322,4 +322,6 @@ np.savetxt('Force.out', (np.transpose(-P_r_conv[1,:])))
 plt.title('Force-displacement response')
 plt.xlabel('Lateral Displacement [m]')
 plt.ylabel('Lateral Force [kN]')
+plt.grid()
+plt.show()
 
