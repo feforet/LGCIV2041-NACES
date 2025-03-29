@@ -477,7 +477,7 @@ def calcul(n,L,timoshenko, SelRedInt=False,NL=False):
                     Equilibrium_matrix_local_basic = np.transpose(Compatibility_matrix_local_basic)
                      
                     p_loc_NL[element] = np.dot(Equilibrium_matrix_local_basic, p_bsc)
-                    p_global_NL[element] = np.dot(r_C[element], p_loc_NL[element])
+                    p_global_NL[element] = np.transpose(r_C[element]) @ p_loc_NL[element]
                     for q in range(len(p_global_NL[element])):
                         P_r_NL[Assemblage[element][q]] = p_global_NL[element][q] # vecteur taille 6 (car 6ddl)
                     
