@@ -378,6 +378,7 @@ def calcul(n,L,timoshenko, SelRedInt=False,NL=False):
     if NL == True :
         Classical_NR_or_Disp_Control = 1 # 1 for classical Newton-Raphson method, 2 for displacement-control method
         F_verticale = np.linspace(0, P_f[(No_Ddl//2)-2], num = 100) # Use for NR with linear geometry (46)
+        F_horizontale = np.linspace(0, P_f[len(Free_DoF)-2], num = 100) # Use for NR with linear geometry (46)
         print(F_verticale)
         # Increments of lateral displacement in [m] (for Displacement-Control method)
         Delta_lat = np.linspace(0.0, -1.2, num=24)
@@ -521,21 +522,22 @@ def calcul(n,L,timoshenko, SelRedInt=False,NL=False):
                     P_NL = np.zeros(No_Ddl)
                     P_f_NL = np.zeros(len(Free_DoF))
                     P_f_NL[(No_Ddl//2)-2] = F_verticale[i]# [N]
-                    P_f_NL[len(Free_DoF)-2] = -2000e3 # [N]
+                    P_f_NL[len(Free_DoF)-2] = F_horizontale[i]  # -2000e3 # [N]
                     # Building other vectors:
                     P_NL[Free_DoF] = P_f_NL
                     
-                    Res = P_NL[Free_DoF]  - P_r_NL[Free_DoF]  # Residual
+                    Res = P_NL  - P_r_NL  # Residual
                     #  Compute residual norm for convergence:
                     Residual = np.linalg.norm(Res) # Euclidean norm of residual vector
-                    print(Residual)
+                    
                     if Residual <= tol_force: # Check for convergence
                         conv = True # Iterative process has converged
                         print('Number of iterations:',iteration)
                     else:
                         # Sub-matrix for the free DoFs:
                         K_ff_NL = K_str_NL[Free_DoF[:,None], Free_DoF[None,:]]
-                        U[Free_DoF] = U[Free_DoF] + np.linalg.solve(K_ff_NL, Res)
+                        # Completing the global displacement vector:
+                        U[Free_DoF] = U[Free_DoF] + np.linalg.solve(K_ff_NL, Res[Free_DoF])
                     # Check for convergence
                 else:  # Use displacement-control method
                     # Compute residual:
