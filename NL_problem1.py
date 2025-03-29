@@ -21,6 +21,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.linalg import inv
 import time
+import math
 
 # DEFINITIONS
 # Display of the element undeformed configuration based on the connectivity (incidence) matrix
@@ -213,7 +214,7 @@ def beam_mesh(n, L):
 
 
     
-def calcul(n,L,timoshenko, SelRedInt=False):
+def calcul(n,L,timoshenko, SelRedInt=False,NL=False):
     # Strucutre connectivity matrix and coordinates of the nodes
     # Defining the type of Element : 6 or 5 DoFs (5 - to complete in Assignment)
     Coord, Connect, Elem_Types = beam_mesh(n,L)
@@ -374,6 +375,205 @@ def calcul(n,L,timoshenko, SelRedInt=False):
             for k in range(len(k_elem_glob[elem])) : 
                 K_str[Assemblage[elem][j]][Assemblage[elem][k]] += k_elem_glob[elem][j][k]
 
+    if NL == True :
+        Classical_NR_or_Disp_Control = 1 # 1 for classical Newton-Raphson method, 2 for displacement-control method
+        F_verticale = np.linspace(0, P_f[(No_Ddl//2)-2], num = 100) # Use for NR with linear geometry (46)
+        print(F_verticale)
+        # Increments of lateral displacement in [m] (for Displacement-Control method)
+        Delta_lat = np.linspace(0.0, -1.2, num=24)
+        # Max no. of iterations for solver
+        Max_no_iterations = 15  
+        tol_force = 1000 # N 
+        
+        if Classical_NR_or_Disp_Control == 1: # Using classical Newton-Raphson method:
+            No_increments = len(F_verticale) # la force verticale
+        else:  # Using displacement-control method:
+            No_increments = len(Delta_lat)    
+
+        # 6 car 6 ddl par noeud
+        U_conv = np.zeros((No_Ddl, No_increments),dtype = float) # ligne = diplacement/rotation (6), colonne = increment
+
+        # Assigning the imposed displacement to the second DoF:
+        if Classical_NR_or_Disp_Control == 2:
+            U_conv[1,] = Delta_lat
+
+        P_r_conv = np.zeros((No_Ddl, No_increments), dtype = float)
+        K_str_conv = np.zeros((No_Ddl, No_Ddl, No_increments), dtype = float)
+        Counter_Iterations = np.zeros((2, No_increments), dtype = float) # variable that stores the number of iterations per increment
+
+        # Next commands are really not necessary, just filling in the first line in the variable Counter_Iterations with the imposed force / displacements
+        # Further down the code we will add a 2nd line with the number of iterations for each of those imposed force / displacements
+        if Classical_NR_or_Disp_Control == 1: # Using classical Newton-Raphson method:
+            Counter_Iterations[0, ] = F_verticale
+        else:  # Using displacement-control method:
+            Counter_Iterations[0, ] = Delta_lat
+
+        # Initializing residual:
+        Res = np.zeros((No_Ddl),dtype = float)
+        
+        ## Cycle through the load increments:
+        for i in range(No_increments):
+            # Initialization of displacement vector for iterative procedure:
+            if i ==0:
+                U = U_conv[:, i].copy() # toutes les lignes de la colonne i+1
+            else:
+                # On prend le dernier déplacement de la solution précédente
+                U = U_conv[:, i-1].copy() # vecteur de taille No_Ddl
+                if Classical_NR_or_Disp_Control == 2:
+                    U[1]=U_conv[1, i]
+            
+            # Convergence flag initialization (false => not converged true => converged):
+            conv = False   
+            # Initialization of the iteration counter:
+            iteration = 0 
+            ## global NR procedure
+            while (conv == False and (iteration <= Max_no_iterations)): # Newton-Raphson iterations
+                
+                # State Determination - Computation of structural resisting forces (in the global reference system):
+                
+                # Introduce below the commands that allow to obtain the basic element displacements (in the basic reference system) from the nodal structural displacements (in the global reference system), considering nonlinear geometry:
+                u_global_NL = U # contient tous les déplacements de TOUTE la structure
+                
+                u_loc_NL = np.zeros((No_Elem, 6)) 
+                p_loc_NL = np.zeros((No_Elem, 6))
+                p_global_NL = np.zeros((No_Elem,6)) 
+                P_r_NL = np.zeros((No_Ddl))
+                K_geo_NL = np.zeros((No_Elem,6,6))
+                k_loc_NL = np.zeros((No_Elem,6,6))
+                k_glob_NL = np.zeros((No_Elem,6,6))
+                K_str_NL = np.zeros((No_Ddl, No_Ddl))
+                
+                for element in range(No_Elem) :
+                    #### Compute the structural resisting forces P_r (in the global reference system) 
+                    u_loc_NL[element] = r_C[element] @ u_global_NL[Assemblage[element]]
+                    
+                    L = L_Elem[element]
+                    EA_elem = AE_Elem[element]
+                    EI_elem = EI_Elem[element]
+                    
+                    l = ((u_loc_NL[element][4]-u_loc_NL[element][1])**(2)+(L+u_loc_NL[element][3]-u_loc_NL[element][0])**(2))**(1/2)
+                    beta = math.atan2((u_loc_NL[element][4]-u_loc_NL[element][1]),(L+u_loc_NL[element][3]-u_loc_NL[element][0]))
+                
+                    u_bsc1= ((l**2-L**2)/(l+L))      
+                    u_bsc2 = u_loc_NL[element][2]-beta
+                    u_bsc3 = u_loc_NL[element][5]-beta
+                    
+                    u_bsc=np.array([u_bsc1, u_bsc2, u_bsc3])
+
+                
+                    # Compute basic forces from basic displacements, using the basic stiffness matrix k_bsc:
+                    k_bsc = k_bsc = np.array([[ EA_elem/l ,  0   ,  0   ],
+                                        [   0   ,4*EI_elem/l,2*EI_elem/l],
+                                        [   0   ,2*EI_elem/l,4*EI_elem/l]])
+                    p_bsc = np.dot(k_bsc, u_bsc)
+                    # Introduce below the commands that allow to compute the nodal element forces in the global reference system from the basic element forces:
+                    c = math.cos(beta)
+                    s = math.sin(beta)
+                    Compatibility_matrix_local_basic = np.array([[-c ,-s , 0 ,c  , s   ,0 ],
+                                                                [-s/l,c/l, 1 ,s/l,-c/l ,0 ],
+                                                                [-s/l,c/l, 0 ,s/l,-c/l ,1 ]])
+                    
+                    Equilibrium_matrix_local_basic = np.transpose(Compatibility_matrix_local_basic)
+                     
+                    p_loc_NL[element] = np.dot(Equilibrium_matrix_local_basic, p_bsc)
+                    p_global_NL[element] = np.dot(r_C[element], p_loc_NL[element])
+                    for q in range(len(p_global_NL[element])):
+                        P_r_NL[Assemblage[element][q]] = p_global_NL[element][q] # vecteur taille 6 (car 6ddl)
+                    
+                    #### Computation of the structural stiffness matrix in the global reference system:
+                    c = math.cos(beta)
+                    s = math.sin(beta)
+                    G1 = (1/l) * np.array([[s**2 , -c*s , 0 ,-s**2,  c*s , 0 ],
+                                        [-c*s , c**2 , 0 , c*s ,-c**2 , 0 ],
+                                        [ 0   , 0    , 0 , 0   , 0    , 0 ],
+                                        [-s**2, c*s  , 0 , s**2, -c*s , 0 ],
+                                        [ c*s , -c**2, 0 ,-c*s , c**2 , 0 ],
+                                        [ 0   ,   0  , 0 ,  0  ,  0   , 0 ]])
+                    G23= (1/(l**2)) * np.array([[-2*c*s   , c**2-s**2 , 0 ,   2*c*s   , s**2-c**2 , 0 ],
+                                                [c**2-s**2, 2*c*s     , 0 , s**2-c**2 ,    -2*c*s , 0 ],
+                                                [    0    , 0         , 0 , 0         , 0         , 0 ],
+                                                [  2*c*s  , s**2-c**2 , 0 ,  -2*c*s   , c**2-s**2 , 0 ],
+                                                [s**2-c**2, -2*c*s    , 0 , c**2-s**2 ,   2*c*s   , 0 ],
+                                                [ 0       , 0         , 0 ,     0     ,     0     , 0 ]])
+                    
+                    
+                    K_geo_NL[element] = (p_bsc[0])*G1 + (p_bsc[1]+p_bsc[2])*G23
+                    k_loc_NL[element] = Equilibrium_matrix_local_basic @  k_bsc @ Compatibility_matrix_local_basic + K_geo_NL[element]
+                    
+                    # Computing the global element stiffness from the local element stiffness matrix:
+                    
+                    # Stiffness matrices in the global reference system
+                    k_glob_NL[element] = np.transpose(r_C[element]) @ k_loc_NL[element] @ r_C[element]
+                    
+                    # Assembly of the global structural stiffness matrix
+                    for j in range(len(k_glob_NL[element])) : 
+                        for k in range(len(k_glob_NL[element])) : 
+                            K_str_NL[Assemblage[element][j]][Assemblage[element][k]] += k_glob_NL[element][j][k]
+                            
+            
+            
+                
+                
+                # Evaluate convergence + Solve linearized system (displacement control) + Update displacements:
+
+                if Classical_NR_or_Disp_Control == 1: # Use classical Newton-Raphson method
+                    # Compute residual:
+                    P_NL = np.zeros(No_Ddl)
+                    P_f_NL = np.zeros(len(Free_DoF))
+                    P_f_NL[(No_Ddl//2)-2] = F_verticale[i]# [N]
+                    P_f_NL[len(Free_DoF)-2] = -2000e3 # [N]
+                    # Building other vectors:
+                    P_NL[Free_DoF] = P_f_NL
+                    
+                    Res = P_NL[Free_DoF]  - P_r_NL[Free_DoF]  # Residual
+                    #  Compute residual norm for convergence:
+                    Residual = np.linalg.norm(Res) # Euclidean norm of residual vector
+                    print(Residual)
+                    if Residual <= tol_force: # Check for convergence
+                        conv = True # Iterative process has converged
+                        print('Number of iterations:',iteration)
+                    else:
+                        # Sub-matrix for the free DoFs:
+                        K_ff_NL = K_str_NL[Free_DoF[:,None], Free_DoF[None,:]]
+                        U[Free_DoF] = U[Free_DoF] + np.linalg.solve(K_ff_NL, Res)
+                    # Check for convergence
+                else:  # Use displacement-control method
+                    # Compute residual:
+                    P = np.array([0, -W, 0])
+
+                    aux = np.array([0,2,3])
+                    Res[np.ix_(aux)] = P- P_r[np.ix_(aux)]
+                    # Residual for force-controlled component
+                    Res[1] = 0 # Residual for the displacement-controlled component
+                    #  Compute residual norm for convergence:
+                    Residual = np.linalg.norm(Res) # Euclidean norm of residual vector
+                    if Residual <= tol_force: # Check for convergence
+                        conv = True # Iterative process has converged
+                        print('Number of iterations:',iteration)
+                    else:
+                        K_str[1, :] = 0 # zeroing columns corresponding to displacement-controlled dof
+                        K_str[:, 1] = 0 # zeroing rows corresponding to displacement-controlled dof
+                        K_str[1, 1] = 1 # Assigning ones at diagonal entries corresponding to displacement-controlled dof
+                        U = U + np.linalg.solve(K_str, Res)
+                        # Check for convergence
+            
+                # Update iteration:
+                iteration = iteration + 1  
+
+            Counter_Iterations[1, i] = iteration
+            U_conv[:, i] = U
+            P_r_conv[:, i] = P_r_NL
+            K_str_conv[:, :, i] = K_str_NL
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     """#### Phase 4: Partitioning of the stiffness matrix"""
 
     # Sub-matrix for the free DoFs:
@@ -428,6 +628,11 @@ def calcul(n,L,timoshenko, SelRedInt=False):
         p_loc[i] = k_elem_loc[i] @ u_loc[i]
         
         #print(p_loc[i])
+        
+    if NL == True:
+        U = U_conv[:, -1] # dernière increment car correspond à la force verticale appliquée
+        # le reste c'est pas important pour les plots
+    
     return U, u_loc, P, P_r, p_loc, L_Elem, Scale, Coord, Connect
         
 """### 3: DISPLAY
@@ -537,6 +742,7 @@ def PlotTheta(Coords, Us, exactEB=None, exactT=None, lab=None,save=None):
         plt.savefig(save,bbox_inches='tight')
     plt.show()
 
+print("-------- Calcul linéaire --------")
 start_time = time.time()  # Temps de début
 U2, u_loc2, P2, P_r2, p_loc2, L_Elem2, Scale2, Coord2, Connect2 = calcul(3,10,False)
 end_time = time.time()  # Temps de fin
@@ -552,7 +758,7 @@ print(f"Temps écoulé avec 20 éléments : {elapsed_time2:.4f} secondes")
 
 x = np.linspace(0,10,100)
 UEB, thetaEB = exact_solution_EB(x,10,40e3,EI)
-plot_a = False
+plot_a = True
 if plot_a:
     # Plot u(x) pour les deux maillages et la solution exacte
     PlotUy([Coord20, Coord2], [U20, U2], exactEB=[x, UEB], lab=['20 elements', '2 elements'], save='Uy_EB.pdf')
@@ -560,6 +766,31 @@ if plot_a:
     # Plot theta(x) pour les deux maillages et la solution exacte
     PlotTheta([Coord20, Coord2], [U20, U2], exactEB=[x, thetaEB], lab=['20 elements', '2 elements'], save='Theta_EB.pdf')
 
+
+# Non linéarité
+print("-------- Calcul non linéaire --------")
+start_time = time.time()  # Temps de début
+U2, u_loc2, P2, P_r2, p_loc2, L_Elem2, Scale2, Coord2, Connect2 = calcul(3,10,False, NL=True)
+end_time = time.time()  # Temps de fin
+elapsed_time = end_time - start_time  # Temps écoulé
+print(f"Temps écoulé avec 2 éléments : {elapsed_time:.4f} secondes")
+start_time2 = time.time()  # Temps de début
+U20, u_loc20, P20, P_r20, p_loc20, L_Elem20, Scale20, Coord20, Connect20 = calcul(21,10,False, NL=True)
+end_time2 = time.time()  # Temps de fin
+elapsed_time2 = end_time2 - start_time2  # Temps écoulé
+print(f"Temps écoulé avec 20 éléments : {elapsed_time2:.4f} secondes")
+
+
+
+x = np.linspace(0,10,100)
+UEB, thetaEB = exact_solution_EB(x,10,40e3,EI)
+plot_a = True
+if plot_a:
+    # Plot u(x) pour les deux maillages et la solution exacte
+    PlotUy([Coord20, Coord2], [U20, U2], exactEB=[x, UEB], lab=['20 elements', '2 elements'], save='Uy_EB_NL.pdf')
+
+    # Plot theta(x) pour les deux maillages et la solution exacte
+    PlotTheta([Coord20, Coord2], [U20, U2], exactEB=[x, thetaEB], lab=['20 elements', '2 elements'], save='Theta_EB_NL.pdf')
 
 """(b) (7.5 points) Implement, in the same Python script, the stiffness matrix corresponding to a Timoshenko finite element,
 assuming a linear approximation both for the rotations 𝜃(𝑥) and the transverse displacements 𝑢𝑦0(𝑥). Plot the transverse
@@ -621,7 +852,7 @@ def computeBendingShear_T(u_loc, L_Elem, Connect):
 bending8T, shear8T, xs8T = computeBendingShear_T(u_loc8T, L_Elem8T, Connect8T)
 print(u_loc8T)
 #bending8T, shear8T, xs8T = computeBendingShear_T(u_loc200T, L_Elem200T, Connect200T)
-plot_c = True
+plot_c = False
 if plot_c:
     plot_bending(Coord8T, Connect8T, xs8T, bending8T,save='bending_T.pdf')
     plot_shear(Coord8T, Connect8T, xs8T, shear8T,save='shear_T.pdf')

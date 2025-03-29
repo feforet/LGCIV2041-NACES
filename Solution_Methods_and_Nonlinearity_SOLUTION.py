@@ -54,7 +54,7 @@ def Newton_Raphson_Ramberg_Osgood(theta_applied, tolerance_theta, theta_y, gamma
 # ====== INPUT PARAMETERS: START ======
 # ====================================
 # Account for nonlinear geometric effects (large displacements):
-Consider_non_linear_geometric_effects = False
+Consider_non_linear_geometric_effects = True
 # Use classical Newton-Raphson (1) or Displacement-Control method (2):
 Classical_NR_or_Disp_Control = 1
 # Increments of lateral displacement in [m] (for Newton-Raphson method)
@@ -180,6 +180,11 @@ for i in range(No_increments):
             u_loc = np.dot(Compatibility_matrix_global_local, u_global)
             
             l=((u_loc[4]-u_loc[1])**(2)+(L+u_loc[3]-u_loc[0])**(2))**(1/2)
+            print('l')
+            print(l)
+            print('u')
+            print(u_loc)
+            print('----')
             beta=atan2((u_loc[4]-u_loc[1]),(L+u_loc[3]-u_loc[0]))
             
             u_bsc1= ((l**2-L**2)/(l+L))      
