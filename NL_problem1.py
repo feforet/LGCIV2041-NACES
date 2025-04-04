@@ -526,6 +526,27 @@ def calcul(n,L,timoshenko, SelRedInt=False,NL=False):
                     # Building other vectors:
                     P_NL[Free_DoF] = P_f_NL
                     
+                    # Sub-matrix for the free DoFs:
+                    K_ff_NL = K_str_NL[Free_DoF[:,None], Free_DoF[None,:]]
+                    # Sub-matrix for the fixed DoFs: 
+                    K_dd_NL = K_str_NL[Fixed_DoF[:,None], Fixed_DoF[None,:]]
+                    # Sub-matrices K_fd et K_df:
+                    K_fd_NL = K_str_NL[Free_DoF[:,None], Fixed_DoF[None,:]]
+                    K_df_NL = np.transpose(K_fd_NL)
+                    # Displacement's equation
+                    U_f_NL = inv(K_ff_NL) @ (P_f_NL - K_fd_NL @ U_d)
+
+                    # Completing the global displacement vector:
+                    U[Free_DoF] = U_f_NL
+                    U[Fixed_DoF] = U_d
+                    # Reactions' equation
+                    P_d_NL = K_df_NL @ U_f_NL + K_dd_NL @ U_d
+                    # Completing the vector of nodal forces:
+                    P_NL[Fixed_DoF] = P_d_NL
+                    # Computing the structural resisting forces: 
+                    P_r_NL = K_str_NL @ U
+
+                    
                     Res = P_NL  - P_r_NL  # Residual
                     #  Compute residual norm for convergence:
                     Residual = np.linalg.norm(Res) # Euclidean norm of residual vector
@@ -535,7 +556,7 @@ def calcul(n,L,timoshenko, SelRedInt=False,NL=False):
                         print('Number of iterations:',iteration)
                     else:
                         # Sub-matrix for the free DoFs:
-                        K_ff_NL = K_str_NL[Free_DoF[:,None], Free_DoF[None,:]]
+                        #K_ff_NL = K_str_NL[Free_DoF[:,None], Free_DoF[None,:]]
                         # Completing the global displacement vector:
                         U[Free_DoF] = U[Free_DoF] + np.linalg.solve(K_ff_NL, Res[Free_DoF])
                     # Check for convergence
