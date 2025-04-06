@@ -561,24 +561,9 @@ def calcul(n,L,timoshenko, SelRedInt=False,NL=False):
                         U[Free_DoF] = U[Free_DoF] + np.linalg.solve(K_ff_NL, Res[Free_DoF])
                     # Check for convergence
                 else:  # Use displacement-control method
-                    # Compute residual:
-                    P = np.array([0, -W, 0])
-
-                    aux = np.array([0,2,3])
-                    Res[np.ix_(aux)] = P- P_r[np.ix_(aux)]
-                    # Residual for force-controlled component
-                    Res[1] = 0 # Residual for the displacement-controlled component
-                    #  Compute residual norm for convergence:
-                    Residual = np.linalg.norm(Res) # Euclidean norm of residual vector
-                    if Residual <= tol_force: # Check for convergence
-                        conv = True # Iterative process has converged
-                        print('Number of iterations:',iteration)
-                    else:
-                        K_str[1, :] = 0 # zeroing columns corresponding to displacement-controlled dof
-                        K_str[:, 1] = 0 # zeroing rows corresponding to displacement-controlled dof
-                        K_str[1, 1] = 1 # Assigning ones at diagonal entries corresponding to displacement-controlled dof
-                        U = U + np.linalg.solve(K_str, Res)
-                        # Check for convergence
+                    print(' Pas fait, nous avons seulement implémenté la méthode de Newton-Raphson classique')
+                    raise NotImplementedError("Displacement-control method is not implemented.")
+                    
             
                 # Update iteration:
                 iteration = iteration + 1  
