@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-data_5mm = pd.read_csv("e/e_5mm.csv")
-data_10mm = pd.read_csv("e/e_10mm.csv")
-data_20mm = pd.read_csv("e/e_20mm.csv")
+data_5mm = pd.read_csv("part_2/e/e_5mm.csv")
+data_10mm = pd.read_csv("part_2/e/e_10mm.csv")
+data_20mm = pd.read_csv("part_2/e/e_20mm.csv")
 
 data_5mm = data_5mm.drop(columns=["ODB Name", "Step", "Part Instance Name", "Section Name", "Material Name", "Section Point"])
 data_10mm = data_10mm.drop(columns=["ODB Name", "Step", "Part Instance Name", "Section Name", "Material Name", "Section Point"])
@@ -91,5 +91,5 @@ plt.title('Force-displacement curve considering softening')
 plt.legend()
 plt.grid()
 plt.tight_layout()
-plt.savefig('plots/e_f-u.pdf')
+plt.savefig('part_2/plots/e_f-u.pdf')
 plt.show()

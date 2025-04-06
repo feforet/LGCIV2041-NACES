@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-data_5mm = pd.read_csv("d/d_5mm.csv")
-data_10mm = pd.read_csv("d/d_10mm.csv")
-data_20mm = pd.read_csv("d/d_20mm.csv")
+data_5mm = pd.read_csv("part_2/d/d_5mm.csv")
+data_10mm = pd.read_csv("part_2/d/d_10mm.csv")
+data_20mm = pd.read_csv("part_2/d/d_20mm.csv")
 
 data_5mm["U-U2"] = -data_5mm["U-U2"]
 data_10mm["U-U2"] = -data_10mm["U-U2"]
@@ -64,5 +64,5 @@ plt.title('Force-displacement curve considering hardening')
 plt.legend()
 plt.grid()
 plt.tight_layout()
-plt.savefig('plots/d_f-u.pdf')
+plt.savefig('part_2/plots/d_f-u.pdf')
 plt.show()

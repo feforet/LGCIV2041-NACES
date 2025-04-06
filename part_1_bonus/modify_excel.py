@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-data_eul = pd.read_csv("abaqus_eul.csv")
-data_tim = pd.read_csv("abaqus_tim.csv")
+data_eul = pd.read_csv("part_1_bonus/abaqus_eul.csv")
+data_tim = pd.read_csv("part_1_bonus/abaqus_tim.csv")
 
 
 eul_2m = data_eul[data_eul['Y'] == 10].sort_values(by='X')
@@ -47,7 +47,7 @@ plt.show()
 
 
 
-with pd.ExcelWriter("../output_bonus.xlsx") as writer:
+with pd.ExcelWriter("output_bonus.xlsx") as writer:
     # Prepare data for L=2m
     df_2m = pd.DataFrame({
         'X_eul': eul_2m['X'],

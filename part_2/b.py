@@ -1,17 +1,17 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-data_1mm_3d = pd.read_csv("b/3d_1mm.csv")
-data_2mm_3d = pd.read_csv("b/3d_2mm.csv")
-data_5mm_3d = pd.read_csv("b/3d_5mm.csv")
-data_10mm_3d = pd.read_csv("b/3d_10mm.csv")
-data_20mm_3d = pd.read_csv("b/3d_20mm.csv")
+data_1mm_3d = pd.read_csv("part_2/b/3d_1mm.csv")
+data_2mm_3d = pd.read_csv("part_2/b/3d_2mm.csv")
+data_5mm_3d = pd.read_csv("part_2/b/3d_5mm.csv")
+data_10mm_3d = pd.read_csv("part_2/b/3d_10mm.csv")
+data_20mm_3d = pd.read_csv("part_2/b/3d_20mm.csv")
 
-data_1mm_2d = pd.read_csv("b/2d_1mm.csv")
-data_2mm_2d = pd.read_csv("b/2d_2mm.csv")
-data_5mm_2d = pd.read_csv("b/2d_5mm.csv")
-data_10mm_2d = pd.read_csv("b/2d_10mm.csv")
-data_20mm_2d = pd.read_csv("b/2d_20mm.csv")
+data_1mm_2d = pd.read_csv("part_2/b/2d_1mm.csv")
+data_2mm_2d = pd.read_csv("part_2/b/2d_2mm.csv")
+data_5mm_2d = pd.read_csv("part_2/b/2d_5mm.csv")
+data_10mm_2d = pd.read_csv("part_2/b/2d_10mm.csv")
+data_20mm_2d = pd.read_csv("part_2/b/2d_20mm.csv")
 
 #extracting the data for one particular fiber
 data_1mm_3d = data_1mm_3d[(data_1mm_3d['Y'] == 40) & (data_1mm_3d['Z'] == 0)].sort_values(by='X')
@@ -40,7 +40,7 @@ def b_2d():
     plt.grid()
     plt.legend()
     plt.tight_layout()
-    plt.savefig('plots/b_2d.pdf')
+    plt.savefig('part_2/plots/b_2d.pdf')
     plt.show()
     
     print("2D model")
@@ -64,7 +64,7 @@ def b_3d():
     plt.grid()
     plt.legend()
     plt.tight_layout()
-    plt.savefig('plots/b_3d.pdf')
+    plt.savefig('part_2/plots/b_3d.pdf')
     plt.show()
     
     print("-" * 50)

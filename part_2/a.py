@@ -1,9 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-data3 = pd.read_csv("a/3nodes.csv")
-data6 = pd.read_csv("a/6nodes.csv")
-data60 = pd.read_csv("a/60nodes.csv")
+data3 = pd.read_csv("part_2/a/3nodes.csv")
+data6 = pd.read_csv("part_2/a/6nodes.csv")
+data60 = pd.read_csv("part_2/a/60nodes.csv")
 
 four_points3 = data3[data3['Y'] == 15].sort_values(by='X')
 three_points6 = data6[data6['Y'] == 0].sort_values(by='X')
@@ -28,7 +28,7 @@ def a_2():
     plt.grid()
     plt.legend()
     plt.tight_layout()
-    plt.savefig('plots/a_disp.pdf')
+    plt.savefig('part_2/plots/a_disp.pdf')
     plt.show()
     var = 'MISESMAX'
     plt.plot(four_points3['X'], four_points3[var], label='4 points - 3 elements')
@@ -39,7 +39,7 @@ def a_2():
     plt.grid()
     plt.legend()
     plt.tight_layout()
-    plt.savefig('plots/a_vonmises.pdf')
+    plt.savefig('part_2/plots/a_vonmises.pdf')
     plt.show()
     
     print(f"displacement 3 elements: {four_points3['U-U2'].min()} at x = {four_points3['X'][four_points3['U-U2'].idxmin()]}")
@@ -59,7 +59,7 @@ def a_3():
     plt.grid()
     plt.legend()
     plt.tight_layout()
-    plt.savefig('plots/a_moments.pdf')
+    plt.savefig('part_2/plots/a_moments.pdf')
     plt.show()
     var = 'SF-SF2'
     plt.plot(three_points60['X'], three_points60[var]/1000, label='3 points - 60 elements')
@@ -69,7 +69,7 @@ def a_3():
     plt.grid()
     plt.legend()
     plt.tight_layout()
-    plt.savefig('plots/a_shear.pdf')
+    plt.savefig('part_2/plots/a_shear.pdf')
     plt.show()
 
 a_2()

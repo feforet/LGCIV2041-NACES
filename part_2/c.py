@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-data_5mm = pd.read_csv("c/c_5mm.csv")
-data_10mm = pd.read_csv("c/c_10mm.csv")
-data_20mm = pd.read_csv("c/c_20mm.csv")
+data_5mm = pd.read_csv("part_2/c/c_5mm.csv")
+data_10mm = pd.read_csv("part_2/c/c_10mm.csv")
+data_20mm = pd.read_csv("part_2/c/c_20mm.csv")
 
 data_5mm["U-U2"] = -data_5mm["U-U2"]
 data_10mm["U-U2"] = -data_10mm["U-U2"]
@@ -67,5 +67,5 @@ plt.legend()
 plt.grid()
 plt.title('Force-displacement curve considering perfect plasticity')
 plt.tight_layout()
-plt.savefig('plots/c_f-u.pdf')
+plt.savefig('part_2/plots/c_f-u.pdf')
 plt.show()
