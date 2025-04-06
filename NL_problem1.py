@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 from numpy.linalg import inv
 import time
 import math
+import pandas as pd
 
 # DEFINITIONS
 # Display of the element undeformed configuration based on the connectivity (incidence) matrix
@@ -379,12 +380,11 @@ def calcul(n,L,timoshenko, SelRedInt=False,NL=False):
         Classical_NR_or_Disp_Control = 1 # 1 for classical Newton-Raphson method, 2 for displacement-control method
         F_verticale = np.linspace(0, P_f[(No_Ddl//2)-2], num = 100) # Use for NR with linear geometry (46)
         F_horizontale = np.linspace(0, P_f[len(Free_DoF)-2], num = 100) # Use for NR with linear geometry (46)
-        print(F_verticale)
         # Increments of lateral displacement in [m] (for Displacement-Control method)
         Delta_lat = np.linspace(0.0, -1.2, num=24)
         # Max no. of iterations for solver
         Max_no_iterations = 15  
-        tol_force = 1000 # N 
+        tol_force = 100 # N 
         
         if Classical_NR_or_Disp_Control == 1: # Using classical Newton-Raphson method:
             No_increments = len(F_verticale) # la force verticale
@@ -781,7 +781,7 @@ print(f"Temps écoulé avec 20 éléments : {elapsed_time2:.4f} secondes")
 
 x = np.linspace(0,10,100)
 UEB, thetaEB = exact_solution_EB(x,10,40e3,EI)
-plot_a = True
+plot_a = False
 if plot_a:
     # Plot u(x) pour les deux maillages et la solution exacte
     PlotUy([Coord20, Coord2], [U20, U2], exactEB=[x, UEB], lab=['20 elements', '2 elements'], save='Uy_EB.pdf')
@@ -789,16 +789,21 @@ if plot_a:
     # Plot theta(x) pour les deux maillages et la solution exacte
     PlotTheta([Coord20, Coord2], [U20, U2], exactEB=[x, thetaEB], lab=['20 elements', '2 elements'], save='Theta_EB.pdf')
 
+"""(f) (22.5 points) Adapt the Python script to compute the geometrically nonlinear response of the beam using a corotational
+formulation. Consider Euler-Bernoulli FEs. Show the transverse displacements for a mesh of 2 elements as well as for a
+mesh of 20 elements. Compare the results with those of the geometrically linear case, in (a), and explain physically the
+differences in the results. PS. You can implement a classical Newton-Raphson method and/or a displacement-control
+method, as discussed in the lecture and exercise session, and shown in the shared Python code."""
 
 # Non linéarité
 print("-------- Calcul non linéaire --------")
 start_time = time.time()  # Temps de début
-U2, u_loc2, P2, P_r2, p_loc2, L_Elem2, Scale2, Coord2, Connect2 = calcul(3,10,False, NL=True)
+U2_NL, u_loc2, P2, P_r2, p_loc2, L_Elem2, Scale2, Coord2, Connect2 = calcul(3,10,False, NL=True)
 end_time = time.time()  # Temps de fin
 elapsed_time = end_time - start_time  # Temps écoulé
 print(f"Temps écoulé avec 2 éléments : {elapsed_time:.4f} secondes")
 start_time2 = time.time()  # Temps de début
-U20, u_loc20, P20, P_r20, p_loc20, L_Elem20, Scale20, Coord20, Connect20 = calcul(21,10,False, NL=True)
+U20_NL, u_loc20, P20, P_r20, p_loc20, L_Elem20, Scale20, Coord20, Connect20 = calcul(21,10,False, NL=True)
 end_time2 = time.time()  # Temps de fin
 elapsed_time2 = end_time2 - start_time2  # Temps écoulé
 print(f"Temps écoulé avec 20 éléments : {elapsed_time2:.4f} secondes")
@@ -810,10 +815,17 @@ UEB, thetaEB = exact_solution_EB(x,10,40e3,EI)
 plot_a = True
 if plot_a:
     # Plot u(x) pour les deux maillages et la solution exacte
-    PlotUy([Coord20, Coord2], [U20, U2], exactEB=[x, UEB], lab=['20 elements', '2 elements'], save='Uy_EB_NL.pdf')
+    PlotUy([Coord20,Coord20,Coord2, Coord2], [U20_NL,U20,U2, U2_NL], exactEB=[x, UEB], lab=['20 elements nonlinear','20 elements linear','2 elements linear', '2 elements nonlinear'], save='Uy_EB_NL.pdf')
 
     # Plot theta(x) pour les deux maillages et la solution exacte
-    PlotTheta([Coord20, Coord2], [U20, U2], exactEB=[x, thetaEB], lab=['20 elements', '2 elements'], save='Theta_EB_NL.pdf')
+    PlotTheta([Coord20,Coord20,Coord2, Coord2], [U20_NL,U20,U2, U2_NL], exactEB=[x, thetaEB], lab=['20 elements nonlinear','20 elements linear','2 elements linear', '2 elements nonlinear'], save='Theta_EB_NL.pdf')
+
+# trouver le deplacment vertical max linéaire et non linéaire
+print("-------- Deplacement vertical max --------")
+print("Max displacement with 2 elements linear: ", np.min(U2[1::3]))
+print("Max displacement with 20 elements linear: ", np.min(U20[1::3]))
+print("Max displacement with 2 elements nonlinear: ", np.min(U2_NL[1::3]))
+print("Max displacement with 20 elements nonlinear: ", np.min(U20_NL[1::3]))
 
 """(b) (7.5 points) Implement, in the same Python script, the stiffness matrix corresponding to a Timoshenko finite element,
 assuming a linear approximation both for the rotations 𝜃(𝑥) and the transverse displacements 𝑢𝑦0(𝑥). Plot the transverse
@@ -885,6 +897,24 @@ always a mesh of 200 FEs, plot in the same graph the transverse displacement alo
 Bernoulli FEs, and the exact solution. Comment on the results, discussing which numerical results you would “trust” as an
 engineer if you did not have access to the exact solution."""
 
+def PlotUy_abaqus(Coords, Us, exactEB=None, exactT=None, lab=None,save = None):
+    if lab is None:
+        lab = ['' for i in range(len(Us)//3-1)]
+    for i in range(len(Us)):
+        plt.plot(Coords[i][0], Us[i][1::3]*1e3, label=lab[i])
+    if exactEB is not None:
+        plt.plot(exactEB[0], exactEB[1]*1e3, label = 'Abaqus solution for Euler-Bernoulli')
+    if exactT is not None:
+        plt.plot(exactT[0], exactT[1]*1e3, label = 'Abaqus solution for Timoshenko')
+    plt.title('Transverse displacement field')
+    plt.xlabel('x [m]')
+    plt.ylabel('uy(x) [mm]')
+    plt.legend()
+    plt.grid()
+    if save is not None:
+        plt.savefig(save,bbox_inches='tight')
+    plt.show()
+
 x_2m = np.linspace(0,2,201)
 x_20m = np.linspace(0,20,201)
 x_200m = np.linspace(0,200,201)
@@ -901,12 +931,36 @@ U_200m_EB, _, _, _, _, _, _, Coord_200m_EB, _ = calcul(201,200,False)
 U_200m_exact_EB, _ = exact_solution_EB(x_200m,200,40e3,EI)
 U_200m_exact_T, _ = exact_solution_T(x_200m,200,40e3,EI,GAc)
 
+
 plot_d = False
 if plot_d:
     PlotUy([Coord_2m_T, Coord_2m_EB], [U_2m_T, U_2m_EB], exactEB=[x_2m, U_2m_exact_EB], exactT=[x_2m, U_2m_exact_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'], save='Uy_2m.pdf')
     PlotUy([Coord_20m_T, Coord_20m_EB], [U_20m_T, U_20m_EB], exactEB=[x_20m, U_20m_exact_EB], exactT=[x_20m, U_20m_exact_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'],save='Uy_20m.pdf')
     PlotUy([Coord_200m_T, Coord_200m_EB], [U_200m_T, U_200m_EB], exactEB=[x_200m, U_200m_exact_EB], exactT=[x_200m, U_200m_exact_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'],save='Uy_200m.pdf')
     #PlotUy([Coord_200m_T, Coord_200m_EB], [U_200m_T, U_200m_EB], exactEB=[x_200m, U_200m_exact_EB], lab=['Timoshenko', 'Euler-Bernoulli'])
+
+# Extraire les déplacements transverses de l'excel
+U_2m_abaqus = pd.read_excel('output_bonus.xlsx', sheet_name='L=2m', header=None)
+x_2m_abaqus = U_2m_abaqus.iloc[1:, 0].to_numpy().astype(float)
+U_2m_abaqus_B = U_2m_abaqus.iloc[1:, 1].to_numpy().astype(float)
+U_2m_abaqus_T = U_2m_abaqus.iloc[1:, 2].to_numpy().astype(float)
+
+U_20m_abaqus = pd.read_excel('output_bonus.xlsx', sheet_name='L=20m', header=None)
+x_20m_abaqus = U_20m_abaqus.iloc[1:, 0].to_numpy().astype(float)
+U_20m_abaqus_B = U_20m_abaqus.iloc[1:, 1].to_numpy().astype(float)
+U_20m_abaqus_T = U_20m_abaqus.iloc[1:, 2].to_numpy().astype(float)
+
+U_200m_abaqus = pd.read_excel('output_bonus.xlsx', sheet_name='L=200m', header=None)
+x_200m_abaqus = U_200m_abaqus.iloc[1:, 0].to_numpy().astype(float)
+U_200m_abaqus_B = U_200m_abaqus.iloc[1:, 1].to_numpy().astype(float)
+U_200m_abaqus_T = U_200m_abaqus.iloc[1:, 2].to_numpy().astype(float)
+
+
+plot_d_abaqus = False
+if plot_d_abaqus:
+    PlotUy_abaqus([Coord_2m_T, Coord_2m_EB], [U_2m_T, U_2m_EB], exactEB=[x_2m_abaqus, U_2m_abaqus_B], exactT=[x_2m_abaqus, U_2m_abaqus_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'], save='Uy_2m_abaqus.pdf')
+    PlotUy_abaqus([Coord_20m_T, Coord_20m_EB], [U_20m_T, U_20m_EB], exactEB=[x_20m_abaqus, U_20m_abaqus_B], exactT=[x_20m_abaqus, U_20m_abaqus_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'],save='Uy_20m_abaqus.pdf')
+    PlotUy_abaqus([Coord_200m_T, Coord_200m_EB], [U_200m_T, U_200m_EB], exactEB=[x_200m_abaqus, U_200m_abaqus_B], exactT=[x_200m_abaqus, U_200m_abaqus_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'],save='Uy_200m_abaqus.pdf')
 
 """(e) (7.5 points) Compute analytically and show the Timoshenko stiffness matrix considering selective reduced integration,
 as discussed in the lecture. Implement it in the Python script and plot again the transverse displacement for the same cases
@@ -921,8 +975,4 @@ if plot_e:
     PlotUy([Coord_20m_T, Coord_20m_EB], [U_20m_T_SRI, U_20m_EB], exactEB=[x_20m, U_20m_exact_EB], exactT=[x_20m, U_20m_exact_T], lab=['Timoshenko with selective reduced integration', 'Euler-Bernoulli FEs'], save='Uy_20m_SRI.pdf')
     PlotUy([Coord_200m_T, Coord_200m_EB], [U_200m_T_SRI, U_200m_EB], exactEB=[x_200m, U_200m_exact_EB], exactT=[x_200m, U_200m_exact_T], lab=['Timoshenko with selective reduced integration', 'Euler-Bernoulli FEs'], save='Uy_200m_SRI.pdf')
 
-"""(f) (22.5 points) Adapt the Python script to compute the geometrically nonlinear response of the beam using a corotational
-formulation. Consider Euler-Bernoulli FEs. Show the transverse displacements for a mesh of 2 elements as well as for a
-mesh of 20 elements. Compare the results with those of the geometrically linear case, in (a), and explain physically the
-differences in the results. PS. You can implement a classical Newton-Raphson method and/or a displacement-control
-method, as discussed in the lecture and exercise session, and shown in the shared Python code."""
+
