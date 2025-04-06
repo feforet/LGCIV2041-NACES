@@ -1,4 +1,15 @@
 # Assigmnent LGCIV2041 - Numerical Analysis
 
-Ce dépôt Git contient tout le code utilisé dans le cadre du devoir pour le cours d'analyse numérique de l'UCLouvain, donné par les professeurs João Pacheco de Almeida et Hadrien Rattez.
-Assistant : Luc Simonin
+**Authors : Félix Foret and Louis Herphelin**
+
+This git repository contains all the scripts used in the scope of the assignment of Numerical Analysis of Civil Engineering Structures.
+
+Professors : João Pacheco de Almeida and Hadrien Rattez
+
+Teaching assistant : Luc Simonin
+
+Year : 2024 - 2025
+
+## Instructions
+
+All the python scripts have to be launched from the main folder of the repository.

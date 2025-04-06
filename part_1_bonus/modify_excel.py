@@ -8,6 +8,7 @@ data_tim = pd.read_csv("part_1_bonus/abaqus_tim.csv")
 
 
 eul_2m = data_eul[data_eul['Y'] == 10].sort_values(by='X')
+print(eul_2m)
 eul_20m = data_eul[data_eul['Y'] == 0].sort_values(by='X')
 eul_200m = data_eul[data_eul['Y'] == -10].sort_values(by='X')
 
@@ -50,27 +51,24 @@ plt.show()
 with pd.ExcelWriter("output_bonus.xlsx") as writer:
     # Prepare data for L=2m
     df_2m = pd.DataFrame({
-        'X_eul': eul_2m['X'],
+        'X': eul_2m['X'],
         'Euler-Bernoulli': eul_2m['UT-UT2'],
-        'X_tim': tim_2m['X'],
         'Timoshenko': tim_2m['UT-UT2'],
     })
     df_2m.to_excel(writer, sheet_name='L=2m', index=False)
     
     # Prepare data for L=20m
     df_20m = pd.DataFrame({
-        'X_eul': eul_20m['X'],
+        'X': eul_20m['X'],
         'Euler-Bernoulli': eul_20m['UT-UT2'],
-        'X_tim': tim_20m['X'],
         'Timoshenko': tim_20m['UT-UT2'],
     })
     df_20m.to_excel(writer, sheet_name='L=20m', index=False)
 
     # Prepare data for L=200m
     df_200m = pd.DataFrame({
-        'X_eul': eul_200m['X'],
+        'X': eul_200m['X'],
         'Euler-Bernoulli': eul_200m['UT-UT2'],
-        'X_tim': tim_200m['X'],
         'Timoshenko': tim_200m['UT-UT2'],
     })
     df_200m.to_excel(writer, sheet_name='L=200m', index=False)

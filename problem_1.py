@@ -21,28 +21,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.linalg import inv
 import time
+import math
+import pandas as pd
 
-# DEFINITIONS
-# Display of the element undeformed configuration based on the connectivity (incidence) matrix
-
-def PlotUndeformed(coord, connect) : 
-
-    for i in range(len(connect)) : 
-        plt.plot( [coord[0][connect[i][0]] , coord[0][connect[i][1]]] , 
-                [coord[1][connect[i][0]] , coord[1][connect[i][1]]] , 
-                '#000000' ) 
-    
-    plt.plot(Coord[0], Coord[1], 'ro')
-    
-    for i in range(len(coord[1])) : 
-        plt.annotate(str(i), (coord[0][i], coord[1][i]))
-    
-    plt.axis('equal')
-    plt.grid()
-    plt.show()
-
-# DEFINITIONS
-# Display of the deformed configuration of the element
 
 def PlotDeformed(coord, connect, displ, scale) : 
     
@@ -65,80 +46,58 @@ def PlotDeformed(coord, connect, displ, scale) :
     plt.grid()
     plt.show()
 
-# DEFINITIONS
-# Display of the shear forces
-
-def PlotShear(coord, connect, Shear) :
-    raise NotImplementedError
-    
-    for i in range(len(connect)) : 
-        plt.plot( [coord[0][connect[i][0]] , coord[0][connect[i][1]]] , 
-                [coord[1][connect[i][0]] , coord[1][connect[i][1]]] , 
-                '#000000' ) 
-    
-    plt.plot(coord[0], coord[1], 'ro')
-    
-    for i in range(len(connect)) : 
-        plt.plot( [coord[0][connect[i][0]], coord[0][connect[i][1]]], 
-                [coord[1][connect[i][0]]+ Shear[i][0], coord[1][connect[i][1]]+ Shear[i][1]] , 
-                'g' )
-        if not (i == len(connect) or i == 0) : 
-            plt.plot([coord[0][connect[i][0]], coord[0][connect[i][0]]], 
-                [coord[1][connect[i][0]]+ Shear[i-1][1], coord[1][connect[i][1]]+ Shear[i][0]] , 
-                'g' )
-        elif i == 0 : 
-            plt.plot([coord[0][connect[i][0]], coord[0][connect[i][0]]], 
-                [coord[1][connect[i][0]], coord[1][connect[i][1]]+ Shear[i][0]] , 
-                'g' )
-        if i == len(connect) - 1 : 
-            plt.plot([coord[0][connect[i][1]], coord[0][connect[i][1]]], 
-                [coord[1][connect[i][1]]+ Shear[i][1], coord[1][connect[i][1]]],  
-                'g' )
-    plt.title('Shear forces')
+def PlotUy(Coords, Us, exactEB=None, exactT=None, lab=None,save = None):
+    if lab is None:
+        lab = ['' for i in range(len(Us)//3-1)]
+    for i in range(len(Us)):
+        plt.plot(Coords[i][0], Us[i][1::3]*1e3, label=lab[i])
+    if exactEB is not None:
+        plt.plot(exactEB[0], exactEB[1]*1e3, label = 'Exact solution for Euler-Bernoulli')
+    if exactT is not None:
+        plt.plot(exactT[0], exactT[1]*1e3, label = 'Exact solution for Timoshenko')
+    plt.title('Transverse displacement field')
     plt.xlabel('x [m]')
-    plt.ylabel('Shear force [N]')
+    plt.ylabel('uy(x) [mm]')
+    plt.legend()
     plt.grid()
+    if save is not None:
+        plt.savefig('part_1_plots/'+save,bbox_inches='tight')
     plt.show()
 
-def PlotBending(coord, connect, Bending, Shear) :
-    raise NotImplementedError
-
-    for i in range(len(connect)) : 
-        plt.plot( [coord[0][connect[i][0]] , coord[0][connect[i][1]]] , 
-                [coord[1][connect[i][0]] , coord[1][connect[i][1]]] , 
-                '#000000' ) 
-    
-    plt.plot(coord[0], coord[1], 'ro')
-    Starting_point = 0
-    
-    for i in range(len(connect)) : 
-        L = abs(coord[0][connect[i][1]] - coord[0][connect[i][0]])
-        x = np.linspace(0, L)
-        a =  - (Shear[i][1] - Shear[i][0]) / (2*L)
-        b =  - Shear[i][0]
-        c = Bending[i][0]
-        M = a * x ** 2 + b * x + c
-        
-        plt.plot(x+Starting_point,M,'r')
-        
-        Starting_point += L
-                     
-        if not (i == len(connect) or i == 0) : 
-            plt.plot([coord[0][connect[i][0]], coord[0][connect[i][0]]], 
-                [coord[1][connect[i][0]]+ Bending[i-1][1], coord[1][connect[i][1]]+ Bending[i][0]] , 
-                'r' )
-        elif i == 0 : 
-            plt.plot([coord[0][connect[i][0]], coord[0][connect[i][0]]], 
-                [coord[1][connect[i][0]], coord[1][connect[i][1]]+ Bending[i][0]] , 
-                'r' )
-        if i == len(connect) - 1 : 
-            plt.plot([coord[0][connect[i][1]], coord[0][connect[i][1]]], 
-                [coord[1][connect[i][1]]+ Bending[i][1], coord[1][connect[i][1]]],  
-                'r' )
-    plt.title('Bending moments')
+def PlotUy_abaqus(Coords, Us, exactEB=None, exactT=None, lab=None,save = None):
+    if lab is None:
+        lab = ['' for i in range(len(Us)//3-1)]
+    for i in range(len(Us)):
+        plt.plot(Coords[i][0], Us[i][1::3]*1e3, label=lab[i])
+    if exactEB is not None:
+        plt.plot(exactEB[0], exactEB[1]*1e3, label = 'Abaqus solution for Euler-Bernoulli')
+    if exactT is not None:
+        plt.plot(exactT[0], exactT[1]*1e3, label = 'Abaqus solution for Timoshenko')
+    plt.title('Transverse displacement field')
     plt.xlabel('x [m]')
-    plt.ylabel('Bending moment [Nm]')
+    plt.ylabel('uy(x) [mm]')
+    plt.legend()
     plt.grid()
+    if save is not None:
+        plt.savefig('part_1_plots/'+save,bbox_inches='tight')
+    plt.show()
+
+def PlotTheta(Coords, Us, exactEB=None, exactT=None, lab=None,save=None):
+    if lab == None:
+        lab = ['' for i in range(len(Us)//3-1)]
+    for i in range(len(Us)):
+        plt.plot(Coords[i][0], Us[i][2::3], label=lab[i])
+    if exactEB is not None:
+        plt.plot(exactEB[0], exactEB[1], label = 'Exact solution for Euler-Bernoulli')
+    if exactT is not None:
+        plt.plot(exactT[0], exactT[1], label = 'Exact solution for Timoshenko')
+    plt.title('Rotational field')
+    plt.xlabel('x [m]')
+    plt.ylabel('theta(x) [rad]')
+    plt.legend()
+    plt.grid()
+    if save is not None:
+        plt.savefig('part_1_plots/'+save,bbox_inches='tight')
     plt.show()
 
 def plot_bending(coord, connect, xs, bending,save = None):
@@ -153,7 +112,7 @@ def plot_bending(coord, connect, xs, bending,save = None):
     plt.ylabel('Bending moment [Nm]')
     plt.grid()
     if save is not None:
-        plt.savefig(save,bbox_inches='tight')
+        plt.savefig('part_1_plots/'+save,bbox_inches='tight')
     plt.show()
 
 def plot_shear(coord, connect, xs, shear,save = None):
@@ -168,7 +127,7 @@ def plot_shear(coord, connect, xs, shear,save = None):
     plt.ylabel('Shear force [N]')
     plt.grid()
     if save is not None:
-        plt.savefig(save,bbox_inches='tight')
+        plt.savefig('part_1_plots/'+save,bbox_inches='tight')
     plt.show()
 
 """### 1: INPUT
@@ -185,11 +144,6 @@ v = 0.2 # [/]
 k = 5/6 # [/]
 GA = EA/(2*(1+v)) # [N]
 GAc = GA*k # [N]
-
-
-# USER
-# Coordinates of the nodes: x in the first line and y in the second line, in [m].
-
 
 
 def beam_mesh(n, L):
@@ -213,20 +167,15 @@ def beam_mesh(n, L):
 
 
     
-def calcul(n,L,timoshenko, SelRedInt=False):
+def calcul(n,L,timoshenko, SelRedInt=False,NL=False):
     # Strucutre connectivity matrix and coordinates of the nodes
     # Defining the type of Element : 6 or 5 DoFs (5 - to complete in Assignment)
     Coord, Connect, Elem_Types = beam_mesh(n,L)
-
-
-    #PlotUndeformed(Coord, np.array([[0,0]])) # Display of nodes
 
     # Total number of degrees of freedom + numbering
     No_Ddl = len(Coord[1])*3  # 3 DoF per node
     Num_Ddl = np.arange(No_Ddl) # Indexing starts at 0 in Python
     print('The structure has ' + str(No_Ddl) + ' degrees of freedom')
-            
-    #PlotUndeformed(Coord, Connect)
 
     # Total number of elements
     No_Elem = len(Connect)
@@ -240,9 +189,6 @@ def calcul(n,L,timoshenko, SelRedInt=False):
 
     # Free degrees of freedom
     Free_DoF = np.delete(Num_Ddl, Fixed_DoF)
-
-    #print("The free degrees of freedom are:")
-    #print(Free_DoF)
 
     # Nodal loads
 
@@ -339,9 +285,8 @@ def calcul(n,L,timoshenko, SelRedInt=False):
                                         [0, 6*EI_Elem[elem]/L_Elem[elem]**2,   4*EI_Elem[elem]/L_Elem[elem],   0,   -6*EI_Elem[elem]/L_Elem[elem]**2,   2*EI_Elem[elem]/L_Elem[elem]],
                                         [-AE_Elem[elem]/L_Elem[elem], 0, 0, AE_Elem[elem]/L_Elem[elem], 0, 0],
                                         [0, -12*EI_Elem[elem]/L_Elem[elem]**3, -6*EI_Elem[elem]/L_Elem[elem]**2, 0,  12*EI_Elem[elem]/L_Elem[elem]**3,   -6*EI_Elem[elem]/L_Elem[elem]**2],
-                                        [0, 6*EI_Elem[elem]/L_Elem[elem]**2,   2*EI_Elem[elem]/L_Elem[elem],  0,    -6*EI_Elem[elem]/L_Elem[elem]**2,   4*EI_Elem[elem]/L_Elem[elem]]])  #MODIFIE
+                                        [0, 6*EI_Elem[elem]/L_Elem[elem]**2,   2*EI_Elem[elem]/L_Elem[elem],  0,    -6*EI_Elem[elem]/L_Elem[elem]**2,   4*EI_Elem[elem]/L_Elem[elem]]])
         
-        # TO COMPLETE
         # Stiffness matrices in the local reference system, 5 DoF
         elif not timoshenko and Elem_Types[elem] == 5: 
             # the idea is to use a local 6x6 matrix and add 0 and 1 to cancel the effect of the DoF not considered
@@ -374,6 +319,203 @@ def calcul(n,L,timoshenko, SelRedInt=False):
             for k in range(len(k_elem_glob[elem])) : 
                 K_str[Assemblage[elem][j]][Assemblage[elem][k]] += k_elem_glob[elem][j][k]
 
+    if NL == True :
+        Classical_NR_or_Disp_Control = 1 # 1 for classical Newton-Raphson method, 2 for displacement-control method
+        F_verticale = np.linspace(0, P_f[(No_Ddl//2)-2], num = 100) # Use for NR with linear geometry (46)
+        F_horizontale = np.linspace(0, P_f[len(Free_DoF)-2], num = 100) # Use for NR with linear geometry (46)
+        # Increments of lateral displacement in [m] (for Displacement-Control method)
+        Delta_lat = np.linspace(0.0, -1.2, num=24)
+        # Max no. of iterations for solver
+        Max_no_iterations = 15  
+        tol_force = 100 # N 
+        
+        if Classical_NR_or_Disp_Control == 1: # Using classical Newton-Raphson method:
+            No_increments = len(F_verticale) # la force verticale
+        else:  # Using displacement-control method:
+            No_increments = len(Delta_lat)    
+
+        # 6 car 6 ddl par noeud
+        U_conv = np.zeros((No_Ddl, No_increments),dtype = float) # ligne = diplacement/rotation (6), colonne = increment
+
+        # Assigning the imposed displacement to the second DoF:
+        if Classical_NR_or_Disp_Control == 2:
+            U_conv[1,] = Delta_lat
+
+        P_r_conv = np.zeros((No_Ddl, No_increments), dtype = float)
+        K_str_conv = np.zeros((No_Ddl, No_Ddl, No_increments), dtype = float)
+        Counter_Iterations = np.zeros((2, No_increments), dtype = float) # variable that stores the number of iterations per increment
+
+        # Next commands are really not necessary, just filling in the first line in the variable Counter_Iterations with the imposed force / displacements
+        # Further down the code we will add a 2nd line with the number of iterations for each of those imposed force / displacements
+        if Classical_NR_or_Disp_Control == 1: # Using classical Newton-Raphson method:
+            Counter_Iterations[0, ] = F_verticale
+        else:  # Using displacement-control method:
+            Counter_Iterations[0, ] = Delta_lat
+
+        # Initializing residual:
+        Res = np.zeros((No_Ddl),dtype = float)
+        
+        ## Cycle through the load increments:
+        for i in range(No_increments):
+            # Initialization of displacement vector for iterative procedure:
+            if i ==0:
+                U = U_conv[:, i].copy() # toutes les lignes de la colonne i+1
+            else:
+                # On prend le dernier déplacement de la solution précédente
+                U = U_conv[:, i-1].copy() # vecteur de taille No_Ddl
+                if Classical_NR_or_Disp_Control == 2:
+                    U[1]=U_conv[1, i]
+            
+            # Convergence flag initialization (false => not converged true => converged):
+            conv = False   
+            # Initialization of the iteration counter:
+            iteration = 0 
+            ## global NR procedure
+            while (conv == False and (iteration <= Max_no_iterations)): # Newton-Raphson iterations
+                
+                # State Determination - Computation of structural resisting forces (in the global reference system):
+                
+                # Introduce below the commands that allow to obtain the basic element displacements (in the basic reference system) from the nodal structural displacements (in the global reference system), considering nonlinear geometry:
+                u_global_NL = U # contient tous les déplacements de TOUTE la structure
+                
+                u_loc_NL = np.zeros((No_Elem, 6)) 
+                p_loc_NL = np.zeros((No_Elem, 6))
+                p_global_NL = np.zeros((No_Elem,6)) 
+                P_r_NL = np.zeros((No_Ddl))
+                K_geo_NL = np.zeros((No_Elem,6,6))
+                k_loc_NL = np.zeros((No_Elem,6,6))
+                k_glob_NL = np.zeros((No_Elem,6,6))
+                K_str_NL = np.zeros((No_Ddl, No_Ddl))
+                
+                for element in range(No_Elem) :
+                    #### Compute the structural resisting forces P_r (in the global reference system) 
+                    u_loc_NL[element] = r_C[element] @ u_global_NL[Assemblage[element]]
+                    
+                    L = L_Elem[element]
+                    EA_elem = AE_Elem[element]
+                    EI_elem = EI_Elem[element]
+                    
+                    l = ((u_loc_NL[element][4]-u_loc_NL[element][1])**(2)+(L+u_loc_NL[element][3]-u_loc_NL[element][0])**(2))**(1/2)
+                    beta = math.atan2((u_loc_NL[element][4]-u_loc_NL[element][1]),(L+u_loc_NL[element][3]-u_loc_NL[element][0]))
+                
+                    u_bsc1= ((l**2-L**2)/(l+L))      
+                    u_bsc2 = u_loc_NL[element][2]-beta
+                    u_bsc3 = u_loc_NL[element][5]-beta
+                    
+                    u_bsc=np.array([u_bsc1, u_bsc2, u_bsc3])
+
+                
+                    # Compute basic forces from basic displacements, using the basic stiffness matrix k_bsc:
+                    k_bsc = k_bsc = np.array([[ EA_elem/l ,  0   ,  0   ],
+                                        [   0   ,4*EI_elem/l,2*EI_elem/l],
+                                        [   0   ,2*EI_elem/l,4*EI_elem/l]])
+                    p_bsc = np.dot(k_bsc, u_bsc)
+                    # Introduce below the commands that allow to compute the nodal element forces in the global reference system from the basic element forces:
+                    c = math.cos(beta)
+                    s = math.sin(beta)
+                    Compatibility_matrix_local_basic = np.array([[-c ,-s , 0 ,c  , s   ,0 ],
+                                                                [-s/l,c/l, 1 ,s/l,-c/l ,0 ],
+                                                                [-s/l,c/l, 0 ,s/l,-c/l ,1 ]])
+                    
+                    Equilibrium_matrix_local_basic = np.transpose(Compatibility_matrix_local_basic)
+                     
+                    p_loc_NL[element] = np.dot(Equilibrium_matrix_local_basic, p_bsc)
+                    p_global_NL[element] = np.transpose(r_C[element]) @ p_loc_NL[element]
+                    for q in range(len(p_global_NL[element])):
+                        P_r_NL[Assemblage[element][q]] = p_global_NL[element][q] # vecteur taille 6 (car 6ddl)
+                    
+                    #### Computation of the structural stiffness matrix in the global reference system:
+                    c = math.cos(beta)
+                    s = math.sin(beta)
+                    G1 = (1/l) * np.array([[s**2 , -c*s , 0 ,-s**2,  c*s , 0 ],
+                                        [-c*s , c**2 , 0 , c*s ,-c**2 , 0 ],
+                                        [ 0   , 0    , 0 , 0   , 0    , 0 ],
+                                        [-s**2, c*s  , 0 , s**2, -c*s , 0 ],
+                                        [ c*s , -c**2, 0 ,-c*s , c**2 , 0 ],
+                                        [ 0   ,   0  , 0 ,  0  ,  0   , 0 ]])
+                    G23= (1/(l**2)) * np.array([[-2*c*s   , c**2-s**2 , 0 ,   2*c*s   , s**2-c**2 , 0 ],
+                                                [c**2-s**2, 2*c*s     , 0 , s**2-c**2 ,    -2*c*s , 0 ],
+                                                [    0    , 0         , 0 , 0         , 0         , 0 ],
+                                                [  2*c*s  , s**2-c**2 , 0 ,  -2*c*s   , c**2-s**2 , 0 ],
+                                                [s**2-c**2, -2*c*s    , 0 , c**2-s**2 ,   2*c*s   , 0 ],
+                                                [ 0       , 0         , 0 ,     0     ,     0     , 0 ]])
+                    
+                    
+                    K_geo_NL[element] = (p_bsc[0])*G1 + (p_bsc[1]+p_bsc[2])*G23
+                    k_loc_NL[element] = Equilibrium_matrix_local_basic @  k_bsc @ Compatibility_matrix_local_basic + K_geo_NL[element]
+                    
+                    # Computing the global element stiffness from the local element stiffness matrix:
+                    
+                    # Stiffness matrices in the global reference system
+                    k_glob_NL[element] = np.transpose(r_C[element]) @ k_loc_NL[element] @ r_C[element]
+                    
+                    # Assembly of the global structural stiffness matrix
+                    for j in range(len(k_glob_NL[element])) : 
+                        for k in range(len(k_glob_NL[element])) : 
+                            K_str_NL[Assemblage[element][j]][Assemblage[element][k]] += k_glob_NL[element][j][k]
+                            
+            
+            
+                
+                
+                # Evaluate convergence + Solve linearized system (displacement control) + Update displacements:
+
+                if Classical_NR_or_Disp_Control == 1: # Use classical Newton-Raphson method
+                    # Compute residual:
+                    P_NL = np.zeros(No_Ddl)
+                    P_f_NL = np.zeros(len(Free_DoF))
+                    P_f_NL[(No_Ddl//2)-2] = F_verticale[i]# [N]
+                    P_f_NL[len(Free_DoF)-2] = F_horizontale[i]  # -2000e3 # [N]
+                    # Building other vectors:
+                    P_NL[Free_DoF] = P_f_NL
+                    
+                    # Sub-matrix for the free DoFs:
+                    K_ff_NL = K_str_NL[Free_DoF[:,None], Free_DoF[None,:]]
+                    # Sub-matrix for the fixed DoFs: 
+                    K_dd_NL = K_str_NL[Fixed_DoF[:,None], Fixed_DoF[None,:]]
+                    # Sub-matrices K_fd et K_df:
+                    K_fd_NL = K_str_NL[Free_DoF[:,None], Fixed_DoF[None,:]]
+                    K_df_NL = np.transpose(K_fd_NL)
+                    # Displacement's equation
+                    U_f_NL = inv(K_ff_NL) @ (P_f_NL - K_fd_NL @ U_d)
+
+                    # Completing the global displacement vector:
+                    U[Free_DoF] = U_f_NL
+                    U[Fixed_DoF] = U_d
+                    # Reactions' equation
+                    P_d_NL = K_df_NL @ U_f_NL + K_dd_NL @ U_d
+                    # Completing the vector of nodal forces:
+                    P_NL[Fixed_DoF] = P_d_NL
+                    # Computing the structural resisting forces: 
+                    P_r_NL = K_str_NL @ U
+
+                    
+                    Res = P_NL  - P_r_NL  # Residual
+                    #  Compute residual norm for convergence:
+                    Residual = np.linalg.norm(Res) # Euclidean norm of residual vector
+                    
+                    if Residual <= tol_force: # Check for convergence
+                        conv = True # Iterative process has converged
+                        print('Number of iterations:',iteration)
+                    else:
+                        # Sub-matrix for the free DoFs:
+                        #K_ff_NL = K_str_NL[Free_DoF[:,None], Free_DoF[None,:]]
+                        # Completing the global displacement vector:
+                        U[Free_DoF] = U[Free_DoF] + np.linalg.solve(K_ff_NL, Res[Free_DoF])
+                    # Check for convergence
+                else:  # Use displacement-control method
+                    print(' Pas fait, nous avons seulement implémenté la méthode de Newton-Raphson classique')
+                    raise NotImplementedError("Displacement-control method is not implemented.")
+                    
+            
+                # Update iteration:
+                iteration = iteration + 1  
+
+            Counter_Iterations[1, i] = iteration
+            U_conv[:, i] = U
+            P_r_conv[:, i] = P_r_NL
+            K_str_conv[:, :, i] = K_str_NL
+
     """#### Phase 4: Partitioning of the stiffness matrix"""
 
     # Sub-matrix for the free DoFs:
@@ -398,10 +540,6 @@ def calcul(n,L,timoshenko, SelRedInt=False):
     # Completing the global displacement vector:
     U[Free_DoF] = U_f
     U[Fixed_DoF] = U_d
-    #print(U)
-
-
-
 
     """#### Phase 6: Reactions' equation
 
@@ -428,40 +566,12 @@ def calcul(n,L,timoshenko, SelRedInt=False):
         p_loc[i] = k_elem_loc[i] @ u_loc[i]
         
         #print(p_loc[i])
-    return U, u_loc, P, P_r, p_loc, L_Elem, Scale, Coord, Connect
         
-"""### 3: DISPLAY
-Display of the internal forces per element
-
-
-#Choice of the element to display 
-
-Elem_ID_to_display = 4
-
-Shear = np.zeros((1,2))
-Bending = np.zeros((1,2))
-
-Shear[0][0] = p_loc[Elem_ID_to_display][1]
-Shear[0][1] = -p_loc[Elem_ID_to_display][4]
-Bending[0][0] = p_loc[Elem_ID_to_display][2]
-Bending[0][1] = -p_loc[Elem_ID_to_display][5]
-N = p_loc[Elem_ID_to_display][3]
-
-print(p_loc[Elem_ID_to_display])
-print(Bending)
-
-# Display of axial force
-print("Axial force in element {} = {}kN".format(Elem_ID_to_display, np.around(N/1000,2)))
-
-# Display of shear force    
-PlotShear(np.array([[0, L_Elem[Elem_ID_to_display]],[0,0]]), np.array([[0,1]]), Shear)
-print(Shear)
-
-# Display of bending moment
-PlotBending(np.array([[0, L_Elem[Elem_ID_to_display]],[0,0]]), np.array([[0,1]]), Bending, Shear) 
-print(Bending)
-"""
-
+    if NL == True:
+        U = U_conv[:, -1] # dernière increment car correspond à la force verticale appliquée
+        # le reste c'est pas important pour les plots
+    
+    return U, u_loc, P, P_r, p_loc, L_Elem, Scale, Coord, Connect
 
 
 timoshenko = False
@@ -501,42 +611,7 @@ def exact_solution_EB(x,L,P,EI):
             theta[i] = (P/(48*EI))*(-9*L**2 + 24*L*x[i] - 12*x[i]**2)
     return uy, theta
 
-def PlotUy(Coords, Us, exactEB=None, exactT=None, lab=None,save = None):
-    if lab is None:
-        lab = ['' for i in range(len(Us)//3-1)]
-    for i in range(len(Us)):
-        plt.plot(Coords[i][0], Us[i][1::3]*1e3, label=lab[i])
-    if exactEB is not None:
-        plt.plot(exactEB[0], exactEB[1]*1e3, label = 'Exact solution for Euler-Bernoulli')
-    if exactT is not None:
-        plt.plot(exactT[0], exactT[1]*1e3, label = 'Exact solution for Timoshenko')
-    plt.title('Transverse displacement field')
-    plt.xlabel('x [m]')
-    plt.ylabel('uy(x) [mm]')
-    plt.legend()
-    plt.grid()
-    if save is not None:
-        plt.savefig(save,bbox_inches='tight')
-    plt.show()
-
-def PlotTheta(Coords, Us, exactEB=None, exactT=None, lab=None,save=None):
-    if lab == None:
-        lab = ['' for i in range(len(Us)//3-1)]
-    for i in range(len(Us)):
-        plt.plot(Coords[i][0], Us[i][2::3], label=lab[i])
-    if exactEB is not None:
-        plt.plot(exactEB[0], exactEB[1], label = 'Exact solution for Euler-Bernoulli')
-    if exactT is not None:
-        plt.plot(exactT[0], exactT[1], label = 'Exact solution for Timoshenko')
-    plt.title('Rotational field')
-    plt.xlabel('x [m]')
-    plt.ylabel('theta(x) [rad]')
-    plt.legend()
-    plt.grid()
-    if save is not None:
-        plt.savefig(save,bbox_inches='tight')
-    plt.show()
-
+print("-------- Calcul linéaire --------")
 start_time = time.time()  # Temps de début
 U2, u_loc2, P2, P_r2, p_loc2, L_Elem2, Scale2, Coord2, Connect2 = calcul(3,10,False)
 end_time = time.time()  # Temps de fin
@@ -548,11 +623,9 @@ end_time2 = time.time()  # Temps de fin
 elapsed_time2 = end_time2 - start_time2  # Temps écoulé
 print(f"Temps écoulé avec 20 éléments : {elapsed_time2:.4f} secondes")
 
-
-
 x = np.linspace(0,10,100)
 UEB, thetaEB = exact_solution_EB(x,10,40e3,EI)
-plot_a = False
+plot_a = True
 if plot_a:
     # Plot u(x) pour les deux maillages et la solution exacte
     PlotUy([Coord20, Coord2], [U20, U2], exactEB=[x, UEB], lab=['20 elements', '2 elements'], save='Uy_EB.pdf')
@@ -560,6 +633,43 @@ if plot_a:
     # Plot theta(x) pour les deux maillages et la solution exacte
     PlotTheta([Coord20, Coord2], [U20, U2], exactEB=[x, thetaEB], lab=['20 elements', '2 elements'], save='Theta_EB.pdf')
 
+"""(f) (22.5 points) Adapt the Python script to compute the geometrically nonlinear response of the beam using a corotational
+formulation. Consider Euler-Bernoulli FEs. Show the transverse displacements for a mesh of 2 elements as well as for a
+mesh of 20 elements. Compare the results with those of the geometrically linear case, in (a), and explain physically the
+differences in the results. PS. You can implement a classical Newton-Raphson method and/or a displacement-control
+method, as discussed in the lecture and exercise session, and shown in the shared Python code."""
+
+# Non linéarité
+print("-------- Calcul non linéaire --------")
+start_time = time.time()  # Temps de début
+U2_NL, u_loc2, P2, P_r2, p_loc2, L_Elem2, Scale2, Coord2, Connect2 = calcul(3,10,False, NL=True)
+end_time = time.time()  # Temps de fin
+elapsed_time = end_time - start_time  # Temps écoulé
+print(f"Temps écoulé avec 2 éléments : {elapsed_time:.4f} secondes")
+start_time2 = time.time()  # Temps de début
+U20_NL, u_loc20, P20, P_r20, p_loc20, L_Elem20, Scale20, Coord20, Connect20 = calcul(21,10,False, NL=True)
+end_time2 = time.time()  # Temps de fin
+elapsed_time2 = end_time2 - start_time2  # Temps écoulé
+print(f"Temps écoulé avec 20 éléments : {elapsed_time2:.4f} secondes")
+
+
+
+x = np.linspace(0,10,100)
+UEB, thetaEB = exact_solution_EB(x,10,40e3,EI)
+plot_a_NL = True
+if plot_a_NL:
+    # Plot u(x) pour les deux maillages et la solution exacte
+    PlotUy([Coord20,Coord20,Coord2, Coord2], [U20_NL,U20,U2, U2_NL], exactEB=[x, UEB], lab=['20 elements nonlinear','20 elements linear','2 elements linear', '2 elements nonlinear'], save='Uy_EB_NL.pdf')
+
+    # Plot theta(x) pour les deux maillages et la solution exacte
+    PlotTheta([Coord20,Coord20,Coord2, Coord2], [U20_NL,U20,U2, U2_NL], exactEB=[x, thetaEB], lab=['20 elements nonlinear','20 elements linear','2 elements linear', '2 elements nonlinear'], save='Theta_EB_NL.pdf')
+
+# trouver le deplacment vertical max linéaire et non linéaire
+print("-------- Deplacement vertical max --------")
+print("Max displacement with 2 elements linear: ", np.min(U2[1::3]))
+print("Max displacement with 20 elements linear: ", np.min(U20[1::3]))
+print("Max displacement with 2 elements nonlinear: ", np.min(U2_NL[1::3]))
+print("Max displacement with 20 elements nonlinear: ", np.min(U20_NL[1::3]))
 
 """(b) (7.5 points) Implement, in the same Python script, the stiffness matrix corresponding to a Timoshenko finite element,
 assuming a linear approximation both for the rotations 𝜃(𝑥) and the transverse displacements 𝑢𝑦0(𝑥). Plot the transverse
@@ -589,7 +699,7 @@ U200T, u_loc200T, P200T, P_r200T, p_loc200T, L_Elem200T, Scale200T, Coord200T, C
 x = np.linspace(0,10,100)
 UT, thetaT = exact_solution_T(x,10,40e3,EI,GAc)
 
-plot_b = False
+plot_b = True
 if plot_b:
     # Plot u(x) pour les deux maillages et la solution exacte
     PlotUy([Coord2T, Coord8T, Coord20T, Coord200T], [U2T, U8T, U20T, U200T], exactT=[x, UT], lab=['2 elements', '8 elements', '20 elements', '200 elements'], save='Uy_T.pdf')
@@ -647,28 +757,47 @@ U_200m_EB, _, _, _, _, _, _, Coord_200m_EB, _ = calcul(201,200,False)
 U_200m_exact_EB, _ = exact_solution_EB(x_200m,200,40e3,EI)
 U_200m_exact_T, _ = exact_solution_T(x_200m,200,40e3,EI,GAc)
 
-plot_d = False
+
+plot_d = True
 if plot_d:
     PlotUy([Coord_2m_T, Coord_2m_EB], [U_2m_T, U_2m_EB], exactEB=[x_2m, U_2m_exact_EB], exactT=[x_2m, U_2m_exact_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'], save='Uy_2m.pdf')
     PlotUy([Coord_20m_T, Coord_20m_EB], [U_20m_T, U_20m_EB], exactEB=[x_20m, U_20m_exact_EB], exactT=[x_20m, U_20m_exact_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'],save='Uy_20m.pdf')
     PlotUy([Coord_200m_T, Coord_200m_EB], [U_200m_T, U_200m_EB], exactEB=[x_200m, U_200m_exact_EB], exactT=[x_200m, U_200m_exact_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'],save='Uy_200m.pdf')
     #PlotUy([Coord_200m_T, Coord_200m_EB], [U_200m_T, U_200m_EB], exactEB=[x_200m, U_200m_exact_EB], lab=['Timoshenko', 'Euler-Bernoulli'])
 
+# Extraire les déplacements transverses de l'excel
+U_2m_abaqus = pd.read_excel('output_bonus.xlsx', sheet_name='L=2m', header=None)
+x_2m_abaqus = U_2m_abaqus.iloc[1:, 0].to_numpy().astype(float)
+U_2m_abaqus_B = U_2m_abaqus.iloc[1:, 1].to_numpy().astype(float)
+U_2m_abaqus_T = U_2m_abaqus.iloc[1:, 2].to_numpy().astype(float)
+
+U_20m_abaqus = pd.read_excel('output_bonus.xlsx', sheet_name='L=20m', header=None)
+x_20m_abaqus = U_20m_abaqus.iloc[1:, 0].to_numpy().astype(float)
+U_20m_abaqus_B = U_20m_abaqus.iloc[1:, 1].to_numpy().astype(float)
+U_20m_abaqus_T = U_20m_abaqus.iloc[1:, 2].to_numpy().astype(float)
+
+U_200m_abaqus = pd.read_excel('output_bonus.xlsx', sheet_name='L=200m', header=None)
+x_200m_abaqus = U_200m_abaqus.iloc[1:, 0].to_numpy().astype(float)
+U_200m_abaqus_B = U_200m_abaqus.iloc[1:, 1].to_numpy().astype(float)
+U_200m_abaqus_T = U_200m_abaqus.iloc[1:, 2].to_numpy().astype(float)
+
+
+plot_d_abaqus = True
+if plot_d_abaqus:
+    PlotUy_abaqus([Coord_2m_T, Coord_2m_EB], [U_2m_T, U_2m_EB], exactEB=[x_2m_abaqus, U_2m_abaqus_B], exactT=[x_2m_abaqus, U_2m_abaqus_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'], save='Uy_2m_abaqus.pdf')
+    PlotUy_abaqus([Coord_20m_T, Coord_20m_EB], [U_20m_T, U_20m_EB], exactEB=[x_20m_abaqus, U_20m_abaqus_B], exactT=[x_20m_abaqus, U_20m_abaqus_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'],save='Uy_20m_abaqus.pdf')
+    PlotUy_abaqus([Coord_200m_T, Coord_200m_EB], [U_200m_T, U_200m_EB], exactEB=[x_200m_abaqus, U_200m_abaqus_B], exactT=[x_200m_abaqus, U_200m_abaqus_T], lab=['Timoshenko FEs', 'Euler-Bernoulli FEs'],save='Uy_200m_abaqus.pdf')
+
 """(e) (7.5 points) Compute analytically and show the Timoshenko stiffness matrix considering selective reduced integration,
 as discussed in the lecture. Implement it in the Python script and plot again the transverse displacement for the same cases
 and mesh of question (d). Comment on the results obtained."""
+
 U_2m_T_SRI, _, _, _, _, _, _, Coord_2m_T_SRI, _ = calcul(201,2,True,True)
 U_20m_T_SRI, _, _, _, _, _, _, Coord_20m_T_SRI, _ = calcul(201,20,True,True)
 U_200m_T_SRI, _, _, _, _, _, _, Coord_200m_T_SRI, _ = calcul(201,200,True,True)
 
-plot_e = False
+plot_e = True
 if plot_e:
     PlotUy([Coord_2m_T, Coord_2m_EB], [U_2m_T_SRI, U_2m_EB], exactEB=[x_2m, U_2m_exact_EB], exactT=[x_2m, U_2m_exact_T], lab=['Timoshenko with selective reduced integration', 'Euler-Bernoulli FEs'], save='Uy_2m_SRI.pdf')
     PlotUy([Coord_20m_T, Coord_20m_EB], [U_20m_T_SRI, U_20m_EB], exactEB=[x_20m, U_20m_exact_EB], exactT=[x_20m, U_20m_exact_T], lab=['Timoshenko with selective reduced integration', 'Euler-Bernoulli FEs'], save='Uy_20m_SRI.pdf')
     PlotUy([Coord_200m_T, Coord_200m_EB], [U_200m_T_SRI, U_200m_EB], exactEB=[x_200m, U_200m_exact_EB], exactT=[x_200m, U_200m_exact_T], lab=['Timoshenko with selective reduced integration', 'Euler-Bernoulli FEs'], save='Uy_200m_SRI.pdf')
-
-"""(f) (22.5 points) Adapt the Python script to compute the geometrically nonlinear response of the beam using a corotational
-formulation. Consider Euler-Bernoulli FEs. Show the transverse displacements for a mesh of 2 elements as well as for a
-mesh of 20 elements. Compare the results with those of the geometrically linear case, in (a), and explain physically the
-differences in the results. PS. You can implement a classical Newton-Raphson method and/or a displacement-control
-method, as discussed in the lecture and exercise session, and shown in the shared Python code."""
